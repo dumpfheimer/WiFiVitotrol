@@ -1,0 +1,3 @@
+const char* wifiSSID = "CHANGEME";
+const char* wifiPassword = "CHANGEME";
+const char* wifiHost = "Virtual Vitotrol";

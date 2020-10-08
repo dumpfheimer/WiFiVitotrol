@@ -1,0 +1,6 @@
+This project is licensed under NPOSL-3.0.
+A copy of the license should be available in the file NPOSL-3.0.txt
+
+If not, please refer to https://opensource.org/licenses/NPOSL-3.0
+
+
