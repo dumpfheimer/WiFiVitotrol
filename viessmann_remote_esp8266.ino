@@ -64,7 +64,7 @@ void setup() {
 
 void loop() {
   // after timeout (1 hour) reboot.
-  if (((lastHeaterCommandReceivedAt + 3600000) < millis() || (lastCommandReceivedAt + 3600000) < millis()) && millis() > 3600000) {
+  if (((lastHeaterCommandReceivedAt + rebootTimeout) < millis() || (lastCommandReceivedAt + rebootTimeout) < millis()) && millis() > rebootTimeout) {
     DEBUG_SERIAL.println("REBOOT");
     DEBUG_SERIAL.flush();
     delay(1000);
