@@ -1,31 +1,9 @@
-#include "dataEnums.h"
-#include "configuration.h"
+#include "main.h"
 
-//        SERIAL CONFIGURATION
-#ifdef ESP8266
-#include "SoftwareSerial.h"
-#define OUT_SERIAL Serial1
-#define IN_SERIAL Serial1
-#define DEBUG_SERIAL Serial
-#endif
-#ifdef ESP32
-#define OUT_SERIAL Serial2
-#define IN_SERIAL Serial2
-#define DEBUG_SERIAL Serial
-#endif
-
-//        VITOTROL CONFIGURATION
-#define DEVICE_CLASS 0x11 // from https://github.com/boblegal31/Heater-remote/blob/1a857b10db96405937f65ed8338e314f57adaedf/NetRemote/example/inc/ViessMann.h
-#define DEVICE_SLOT 0x01
-
-#define DEVICE_ID 0x34
-#define DEVICE_SN1 0x00
-#define DEVICE_SN2 0x05
-
-
-//        BUFFER CONFIGURATION
-// stick to 255 to prevent uint8 of overflowing
-#define BUFFER_LEN 255
+const char* wifiSSID = WIFI_SSID;
+const char* wifiPassword = WIFI_PASSWORD;
+const char* wifiHost = WIFI_HOST;
+const long rebootTimeout = REBOOT_TIMEOUT; // 15 minutes
 
 // the read buffer
 // data we receive from the heater
@@ -46,6 +24,9 @@ unsigned long lastHeaterCommandReceivedAt = 0;
 bool fakePingMessage = false;
 unsigned long lastFakePing = 0;
 
+#if THREADED == true
+TaskHandle_t serialTaskHandle;
+#endif
 void setup() {
   #ifdef ESP32
   OUT_SERIAL.begin(1200, SERIAL_8E2, 18, 19, false);
@@ -60,9 +41,20 @@ void setup() {
   configureData();
 
   setupWifi();
+
+  #if THREADED == true
+  xTaskCreatePinnedToCore(
+                    serialLoopForever,   /* Task function. */
+                    "serialLoopTask",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &serialTaskHandle,      /* Task handle to keep track of created task */
+                    1);          /* pin task to core 1 */  
+  #endif
 }
 
-void loop() {
+void serialLoop() {
   // after timeout (1 hour) reboot.
   if (((lastHeaterCommandReceivedAt + rebootTimeout) < millis() || (lastCommandReceivedAt + rebootTimeout) < millis()) && millis() > rebootTimeout) {
     DEBUG_SERIAL.println("REBOOT");
@@ -70,7 +62,7 @@ void loop() {
     delay(1000);
     ESP.restart();
   }
-  // only speak to heater when when no datapoint is preventing it
+  // only speak to heater when no datapoint is preventing it
   if (!preventCommunication()) {
     if (millis() > bufferReadStart + 500 && bufferPointer > 0) {
       // receiving took longer than 1s. dump!
@@ -172,6 +164,14 @@ void loop() {
     }
   }
   yield();
+}
+void serialLoopForever(void * pvParameters) {
+    while(1) serialLoop();
+}
+void loop() {
+  #if THREADED == false
+  serialLoop();
+  #endif
   // call wifi loop (and ultimately handle wifi clients)
   wifiLoop();
 }

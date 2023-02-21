@@ -1,3 +1,7 @@
+#include "writableData.h"
+
+WritableData *writableDataPoint[WRITABLE_DATAPOINT_SIZE];
+
 
 char* WritableData::getName() {
   return this->name;

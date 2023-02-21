@@ -1,57 +1,6 @@
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
+#include "wifi.h"
 
 ESP8266WebServer server(80);
-#endif
-
-#ifdef ESP32
-#include <WiFi.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
-
-WebServer server(80);
-#endif
-
-
-// ... setup wifi
-void setupWifi() {
-  WiFi.begin(wifiSSID, wifiPassword);
-  #ifdef ESP32
-  WiFi.setHostname(wifiHost);
-  #endif
-
-  uint8_t p = 0;
-  while (writableDataPoint[p] != NULL) {
-    server.on("/get" + String(writableDataPoint[p]->getName()), wifiHandleGetData);
-    server.on("/set" + String(writableDataPoint[p]->getName()), wifiHandleSetData);
-    server.on("/getSource" + String(writableDataPoint[p]->getName()), wifiHandleGetSource);
-    DEBUG_SERIAL.print("dynamically created handler /get- and /set");
-    DEBUG_SERIAL.println(String(writableDataPoint[p]->getName()));
-    p++;
-  }
-  
-  server.on("/", wifiHandleGetOverview);
-  server.on("/get", wifiHandleGetData);
-  server.on("/set", wifiHandleSetData);
-  server.on("/isConnected", wifiHandleIsConnected);
-  server.on("/reboot", wifiHandleReboot);
-
-  DEBUG_SERIAL.println("Connecting to WiFi..");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(100);
-  }
-  if (!MDNS.begin(wifiHost)) {
-    DEBUG_SERIAL.println("Error setting up MDNS responder!");
-  }
-  DEBUG_SERIAL.println(WiFi.localIP());
-  
-  server.begin();
-}
-void wifiLoop() {
-  server.handleClient();
-}
 
 void wifiNotifyCommandReceived() {
   lastCommandReceivedAt = millis();
@@ -188,4 +137,44 @@ void wifiHandleReboot() {
   server.send(200, "text/plain", "ok");
   delay(100);
   ESP.restart();
+}
+// ... setup wifi
+void setupWifi() {
+    WiFi.begin(wifiSSID, wifiPassword);
+    WiFi.setAutoConnect(true);
+#ifdef ESP32
+    WiFi.setHostname(wifiHost);
+#endif
+
+    uint8_t p = 0;
+    while (writableDataPoint[p] != NULL) {
+        server.on("/get" + String(writableDataPoint[p]->getName()), wifiHandleGetData);
+        server.on("/set" + String(writableDataPoint[p]->getName()), HTTP_POST, wifiHandleSetData);
+        server.on("/getSource" + String(writableDataPoint[p]->getName()), wifiHandleGetSource);
+        DEBUG_SERIAL.print("dynamically created handler /get- and /set");
+        DEBUG_SERIAL.println(String(writableDataPoint[p]->getName()));
+        p++;
+    }
+
+    server.on("/", wifiHandleGetOverview);
+    server.on("/get", wifiHandleGetData);
+    server.on("/set", HTTP_POST, wifiHandleSetData);
+    server.on("/isConnected", wifiHandleIsConnected);
+    server.on("/reboot", wifiHandleReboot);
+
+    DEBUG_SERIAL.println("Connecting to WiFi..");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(100);
+    }
+    if (!MDNS.begin(wifiHost)) {
+        DEBUG_SERIAL.println("Error setting up MDNS responder!");
+    }
+    DEBUG_SERIAL.println(WiFi.localIP());
+
+    ElegantOTA.begin(&server);
+
+    server.begin();
+}
+void wifiLoop() {
+    server.handleClient();
 }

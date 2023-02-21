@@ -1,3 +1,5 @@
+#include "utils.h"
+
 #ifdef ESP8266
 void printAsHex(SoftwareSerial* serial, byte *array, unsigned int len)
 {

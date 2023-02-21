@@ -1,3 +1,4 @@
+#include "responseHelper.h"
 
 // overwrites the response buffer with zeros
 void clearResponseBuffer() {

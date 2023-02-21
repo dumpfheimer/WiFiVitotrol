@@ -1,3 +1,5 @@
+#include "dataPerparators.h"
+
 // the current room temperature
 void prepareSendCurrentRoomTemperature() {
   // send current room temperature

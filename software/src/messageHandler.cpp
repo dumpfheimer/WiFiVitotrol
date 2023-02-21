@@ -1,3 +1,5 @@
+#include "messageHandler.h"
+
 #define MSG_PING 0x00
 #define MSG_READ_REQUEST_1 0x31
 #define MSG_READ_REQUEST_N 0x33
@@ -6,42 +8,6 @@
 #define MSG_WRITE_DATA_1 0xB1
 #define MSG_WRITE_DATA_N 0xB3
 #define MSG_WRITE_DATASET 0xBF
-
-// will return whether or not the message could be processed
-bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
-  uint8_t destinationClass = buff[0];
-  uint8_t sourceClass = buff[1];
-  uint8_t cmd = buff[2];
-  uint8_t len = buff[3];
-  uint8_t dsl = buff[4];
-  uint8_t ssk = buff[5];
-
-  if (destinationClass != 0x11) return false;
-  if (sourceClass != 0x00) return false;
-
-  byte *msg = buff + 6;
-  uint8_t msgLen = len - 6 - 2; // 6=header 2=crc
-
-  if (cmd != MSG_READ_REQUEST_N || msg[0] != 0xF8) {
-    lastHeaterCommandReceivedAt = millis();
-  }
-
-  switch(cmd) {
-    case MSG_PING:
-      return workDataWriteOrPing();
-    case MSG_READ_REQUEST_1:
-      return workRequest1(buff[6]);
-    case MSG_READ_REQUEST_N:
-      return workRequestN(buff[6], buff[7]);
-    case MSG_WRITE_DATASET:
-      return workWriteDataset(msg, msgLen);
-    default:
-      DEBUG_SERIAL.println("not sure how to handle message:");
-      printAsHex(&DEBUG_SERIAL, buff, buffLen);
-      DEBUG_SERIAL.println();
-      return false;
-  }
-}
 
 bool workDataWriteOrPing() {
   if(!prepareNextDataWrite()) {
@@ -106,4 +72,40 @@ bool workWriteDataset(byte buffer[], uint8_t bufferLength) {
     default:
       return false;
   }
+}
+
+// will return whether or not the message could be processed
+bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
+    uint8_t destinationClass = buff[0];
+    uint8_t sourceClass = buff[1];
+    uint8_t cmd = buff[2];
+    uint8_t len = buff[3];
+    uint8_t dsl = buff[4];
+    uint8_t ssk = buff[5];
+
+    if (destinationClass != 0x11) return false;
+    if (sourceClass != 0x00) return false;
+
+    byte *msg = buff + 6;
+    uint8_t msgLen = len - 6 - 2; // 6=header 2=crc
+
+    if (cmd != MSG_READ_REQUEST_N || msg[0] != 0xF8) {
+        lastHeaterCommandReceivedAt = millis();
+    }
+
+    switch(cmd) {
+        case MSG_PING:
+            return workDataWriteOrPing();
+        case MSG_READ_REQUEST_1:
+            return workRequest1(buff[6]);
+        case MSG_READ_REQUEST_N:
+            return workRequestN(buff[6], buff[7]);
+        case MSG_WRITE_DATASET:
+            return workWriteDataset(msg, msgLen);
+        default:
+            DEBUG_SERIAL.println("not sure how to handle message:");
+            printAsHex(&DEBUG_SERIAL, buff, buffLen);
+            DEBUG_SERIAL.println();
+            return false;
+    }
 }
