@@ -2,14 +2,14 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-const char* wifiSSID = "CHANGEME";
-const char* wifiPassword = "CHANGEME";
-const char* wifiHost = "Virtual Vitotrol";
-const long rebootTimeout = 1000*60*15; // 15 minutes
+const char *wifiSSID = "CHANGEME";
+const char *wifiPassword = "CHANGEME";
+const char *wifiHost = "Virtual Vitotrol";
+const long rebootTimeout = 1000 * 60 * 15; // 15 minutes
 
-#define OUT_SERIAL Serial1
-#define IN_SERIAL Serial1
-#define DEBUG_SERIAL Serial
+#define ModbusSerial Serial1
+#define ModbusSerial Serial1
+#define DebugSerial Serial
 #define THREADED false
 
 #endif // CONFIGURATION_H

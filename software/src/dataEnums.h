@@ -6,12 +6,12 @@
 #define WRITABLE_DATAPOINT_SIZE 10
 
 enum DataType {
-	DATA_1_INT = 1,
-	DATA_10_INT = 10
+    DATA_1_INT = 1,
+    DATA_10_INT = 10
 };
 enum DataSource {
-	WIFI = 3,
-	HEATER = 4
+    WIFI = 3,
+    HEATER = 4
 };
 
 

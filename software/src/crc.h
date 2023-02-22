@@ -8,6 +8,7 @@
 #include <Arduino.h>
 
 bool isValidCRC(uint8_t data_p[], uint16_t length);
+
 uint16_t calculateViessmannCRC(uint8_t data_p[], uint16_t length);
 
 #endif //SOFTWARE_CRC_H

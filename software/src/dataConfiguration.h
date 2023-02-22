@@ -10,6 +10,7 @@
 #include "dataPerparators.h"
 
 extern class WritableData *currentRoomTemperature;
+
 extern class WritableData *desiredRoomTemperature;
 
 void configureData();

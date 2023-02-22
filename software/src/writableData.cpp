@@ -3,65 +3,77 @@
 WritableData *writableDataPoint[WRITABLE_DATAPOINT_SIZE];
 
 
-char* WritableData::getName() {
-  return this->name;
+char *WritableData::getName() {
+    return this->name;
 }
+
 uint16_t WritableData::getValue() {
-  return this->value;
+    return this->value;
 }
+
 float WritableData::getFloatValue() {
-  if (this->type == DataType::DATA_1_INT) {
-    return (float) this->value;
-  } else if (this->type == DataType::DATA_10_INT) {
-    return ((float) this->value) / 10;
-  } else {
-    return NULL;
-  }
+    if (this->type == DataType::DATA_1_INT) {
+        return (float) this->value;
+    } else if (this->type == DataType::DATA_10_INT) {
+        return ((float) this->value) / 10;
+    } else {
+        return 0;
+    }
 }
+
 DataSource WritableData::getSource() {
-  return this->source;
+    return this->source;
 }
+
 bool WritableData::getHasValidValue() {
-  return this->hasValidValue;
+    return this->hasValidValue;
 }
+
 unsigned long WritableData::getLastSend() {
-  return this->lastSend;
+    return this->lastSend;
 }
+
 unsigned long WritableData::getLastSet() {
-  return this->lastSet;
+    return this->lastSet;
 }
+
 unsigned long WritableData::getPreventCommunicationAfter() {
-  return this->preventCommunicationAfterMS;
+    return this->preventCommunicationAfterMS;
 }
+
 unsigned long WritableData::getPeriodicSend() {
-  return this->periodicSend;
+    return this->periodicSend;
 }
 
 
 bool WritableData::wantsToSendValue() {
-  if (!this->hasValidValue) return false;
-  if (this->writePending) return true;
-  if (this->periodicSend == 0) {
-    return false;
-  } else {
-    return this->lastSend == 0 || this->lastSend + this->periodicSend < millis();
-  }
+    if (!this->hasValidValue) return false;
+    if (this->writePending) return true;
+    if (this->periodicSend == 0) {
+        return false;
+    } else {
+        return this->lastSend == 0 || this->lastSend + this->periodicSend < millis();
+    }
 }
+
 void WritableData::prepare() {
-  this->notifyWrittenToHeater();
-  this->preparationFunction();
+    this->notifyWrittenToHeater();
+    this->preparationFunction();
 }
+
 void WritableData::notifyWrittenToHeater() {
-  this->writePending = false;
-  this->lastSend = millis();
+    this->writePending = false;
+    this->lastSend = millis();
 }
+
 uint8_t WritableData::getSendValue() {
-  if (this->value > 255) {
-    return 0xFF;
-  } else {
-    return this->value & 0xFF;
-  }
+    if (this->value > 255) {
+        return 0xFF;
+    } else {
+        return this->value & 0xFF;
+    }
 }
+
 /*void WritableData::setValueReceivedByWifi(uint16_t newVal, bool forceWrite) {
   if (this->value != newVal || forceWrite) {
     this->writePending = true;
@@ -72,88 +84,97 @@ void WritableData::setValueReceivedByWifi(uint16_t newVal) {
   this->setValue(newVal, false);
 }*/
 void WritableData::setValueReceivedByWifi(float newVal, bool forceWrite) {
-  uint16_t oldVal = this->value;
-  if (this->type == DataType::DATA_1_INT) {
-    this->value = (uint16_t) newVal;
-  } else if (this->type == DataType::DATA_10_INT) {
-    this->value = (uint16_t) (newVal*10);
-  } else {
-    return;
-  }
-  if (this->value != oldVal || forceWrite) {
-    this->writePending = true;
-  }
-  this->hasValidValue = true;
-  this->lastSet = millis();
+    uint16_t oldVal = this->value;
+    if (this->type == DataType::DATA_1_INT) {
+        this->value = (uint16_t) newVal;
+    } else if (this->type == DataType::DATA_10_INT) {
+        this->value = (uint16_t) (newVal * 10);
+    } else {
+        return;
+    }
+    if (this->value != oldVal || forceWrite) {
+        this->writePending = true;
+    }
+    this->hasValidValue = true;
+    this->lastSet = millis();
 }
+
 void WritableData::setValueReceivedByWifi(float newVal) {
-  this->setValueReceivedByWifi(newVal, false);
+    this->setValueReceivedByWifi(newVal, false);
 }
+
 bool WritableData::preventCommunication() {
-  if (this->preventCommunicationAfterMS == 0) return false;
-  if (!this->hasValidValue) return true;
-  return (unsigned long)(millis() - this->lastSet) >= this->preventCommunicationAfterMS;
+    if (this->preventCommunicationAfterMS == 0) return false;
+    if (!this->hasValidValue) return true;
+    return (unsigned long) (millis() - this->lastSet) >= this->preventCommunicationAfterMS;
 }
+
 void WritableData::preventCommunicationAfter(unsigned long preventCommunicationAfterMS) {
-  this->preventCommunicationAfterMS = preventCommunicationAfterMS;
+    this->preventCommunicationAfterMS = preventCommunicationAfterMS;
 }
 
 void WritableData::init(String name, DataType t, unsigned long periodicSend, void (*preparationFunction)()) {
-  this->name = (char*) malloc((name.length() + 1) * sizeof(char));
-  this->type = t;
-  this->periodicSend = periodicSend;
-  name.toCharArray(this->name, name.length() + 1);
-  this->name[name.length()] = 0;
-  this->lastSend = 0;
-  this->preparationFunction = preparationFunction;
-  this->preventCommunicationAfterMS = (unsigned long) 0;
+    this->name = (char *) malloc((name.length() + 1) * sizeof(char));
+    this->type = t;
+    this->periodicSend = periodicSend;
+    name.toCharArray(this->name, name.length() + 1);
+    this->name[name.length()] = 0;
+    this->lastSend = 0;
+    this->value = 0;
+    this->hasValidValue = false;
+    this->writePending = false;
+    this->lastSet = 0;
+    this->preparationFunction = preparationFunction;
+    this->preventCommunicationAfterMS = (unsigned long) 0;
 }
 
-class WritableData* getWritableDataByName(String name) {
-  uint8_t p = 0;
-  while (writableDataPoint[p] != NULL) {
-    //if(strcmp(writableDataPoint[p]->name, name) == 0) {
-    if (name.compareTo(writableDataPoint[p]->getName()) == 0) {
-      return writableDataPoint[p];
+class WritableData *getWritableDataByName(String name) {
+    uint8_t p = 0;
+    while (writableDataPoint[p] != NULL) {
+        //if(strcmp(writableDataPoint[p]->name, name) == 0) {
+        if (name.compareTo(writableDataPoint[p]->getName()) == 0) {
+            return writableDataPoint[p];
+        }
+        p++;
     }
-    p++;
-  }
-  return NULL;
+    return NULL;
 }
 
-class WritableData* createWritableDataPoint(String name, DataType t, unsigned long periodicSend, void (*preparationFunction)()) {
-  uint8_t p = 0;
-  while (writableDataPoint[p] != NULL) p++;
+class WritableData *
+createWritableDataPoint(String name, DataType t, unsigned long periodicSend, void (*preparationFunction)()) {
+    uint8_t p = 0;
+    while (writableDataPoint[p] != NULL) p++;
 
-  if (p >= WRITABLE_DATAPOINT_SIZE) {
-    DEBUG_SERIAL.println("ERROR: createWritableDataPoint called, but array is full. Increase WRITABLE_DATAPOINT_SIZE");
-    return NULL;
-  }
-  //struct WritableData *pointer = (WritableData*)malloc(sizeof(struct WritableData));
-  writableDataPoint[p] = (class WritableData*)malloc(sizeof(class WritableData));
-  writableDataPoint[p]->init(name, t, periodicSend, preparationFunction);
-  return writableDataPoint[p];
+    if (p >= WRITABLE_DATAPOINT_SIZE) {
+        DebugSerial.println(
+                "ERROR: createWritableDataPoint called, but array is full. Increase WRITABLE_DATAPOINT_SIZE");
+        return NULL;
+    }
+    //struct WritableData *pointer = (WritableData*)malloc(sizeof(struct WritableData));
+    writableDataPoint[p] = new WritableData();
+    writableDataPoint[p]->init(name, t, periodicSend, preparationFunction);
+    return writableDataPoint[p];
 }
 
 bool prepareNextDataWrite() {
-  uint8_t p = 0;
-  while (writableDataPoint[p] != NULL) {
-    if (writableDataPoint[p]->wantsToSendValue()) {
-      writableDataPoint[p]->prepare();
-      return true;
+    uint8_t p = 0;
+    while (writableDataPoint[p] != NULL) {
+        if (writableDataPoint[p]->wantsToSendValue()) {
+            writableDataPoint[p]->prepare();
+            return true;
+        }
+        p++;
     }
-    p++;
-  }
-  return false;
+    return false;
 }
 
 bool preventCommunication() {
-  uint8_t p = 0;
-  while (writableDataPoint[p] != NULL) {
-    if (writableDataPoint[p]->preventCommunication()) {
-      return true;
+    uint8_t p = 0;
+    while (writableDataPoint[p] != NULL) {
+        if (writableDataPoint[p]->preventCommunication()) {
+            return true;
+        }
+        p++;
     }
-    p++;
-  }
-  return false;
+    return false;
 }

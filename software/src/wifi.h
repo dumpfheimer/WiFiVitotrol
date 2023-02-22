@@ -19,14 +19,15 @@ extern ESP8266WebServer server;
 #endif
 
 #ifdef ESP32
+
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 
-WebServer server(80);
 #endif
 
 void setupWifi();
+
 void wifiLoop();
 
 #endif //SOFTWARE_WIFI_H

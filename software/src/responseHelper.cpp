@@ -2,42 +2,43 @@
 
 // overwrites the response buffer with zeros
 void clearResponseBuffer() {
-  for(int i = 0; i < BUFFER_LEN; i++) responseBuffer[i] = 0;
+    for (int i = 0; i < BUFFER_LEN; i++) responseBuffer[i] = 0;
 }
 
 // calculate the checksum and append it to buffer
 void addCRCToBuffer(uint8_t bufferLength) {
-  uint16_t crc = calculateViessmannCRC(responseBuffer, bufferLength);
-  uint8_t b2 = crc & 0xFF;
-  uint8_t b1 = (crc >> 8) & 0xFF;
+    uint16_t crc = calculateViessmannCRC(responseBuffer, bufferLength);
+    uint8_t b2 = crc & 0xFF;
+    uint8_t b1 = (crc >> 8) & 0xFF;
 
-  responseBuffer[bufferLength] = b1;
-  responseBuffer[bufferLength + 1] = b2;
+    responseBuffer[bufferLength] = b1;
+    responseBuffer[bufferLength + 1] = b2;
 }
 
 void prepareResponse(uint8_t cmd, byte msg[], uint8_t msgLen) {
-  clearResponseBuffer();
-  responseBuffer[0] = 0x00; // dest class
-  responseBuffer[1] = DEVICE_CLASS; // source class
-  responseBuffer[2] = cmd;  // cmd
-  responseBuffer[3] = 8 + msgLen;  // length
-  responseBuffer[4] = DEVICE_SLOT;
-  responseBuffer[5] = 0x01;
+    clearResponseBuffer();
+    responseBuffer[0] = 0x00; // dest class
+    responseBuffer[1] = DEVICE_CLASS; // source class
+    responseBuffer[2] = cmd;  // cmd
+    responseBuffer[3] = 8 + msgLen;  // length
+    responseBuffer[4] = DEVICE_SLOT;
+    responseBuffer[5] = 0x01;
 
-  // copy msg to responseBuffer
-  for (uint8_t i = 0; i <  msgLen && i < BUFFER_LEN - 8; i++) {
-    responseBuffer[i+6] = msg[i];
-  }
+    // copy msg to responseBuffer
+    for (uint8_t i = 0; i < msgLen && i < BUFFER_LEN - 8; i++) {
+        responseBuffer[i + 6] = msg[i];
+    }
 
-  // calculate crc
-  addCRCToBuffer(msgLen + 6); // first empty slot after message
+    // calculate crc
+    addCRCToBuffer(msgLen + 6); // first empty slot after message
 }
-void sendResponse() {
-  uint8_t startAtIndex = 0;
 
-  for (uint8_t i = startAtIndex; i <  responseBuffer[3] && i < BUFFER_LEN; i++) {
-    OUT_SERIAL.write(responseBuffer[i]);
-  }
-  
-  OUT_SERIAL.flush();
+void sendResponse() {
+    uint8_t startAtIndex = 0;
+
+    for (uint8_t i = startAtIndex; i < responseBuffer[3] && i < BUFFER_LEN; i++) {
+        ModbusSerial.write(responseBuffer[i]);
+    }
+
+    ModbusSerial.flush();
 }

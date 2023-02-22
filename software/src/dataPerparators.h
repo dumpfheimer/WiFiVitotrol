@@ -10,6 +10,7 @@
 #include "responseHelper.h"
 
 void prepareSendCurrentRoomTemperature();
+
 void prepareSendDesiredRoomTemperature();
 
 #endif //SOFTWARE_DATAPERPARATORS_H

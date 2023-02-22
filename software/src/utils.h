@@ -6,16 +6,13 @@
 #define SOFTWARE_UTILS_H
 
 #include <Arduino.h>
-#include "SoftwareSerial.h"
 
 #include "main.h"
 
-#ifdef ESP8266
-void printAsHex(SoftwareSerial* serial, byte *array, unsigned int len);
-#endif
+void printAsHex(Stream *serial, byte *array, unsigned int len);
 
-void printAsHex(HardwareSerial* serial, byte *array, unsigned int len);
 void clearBuff();
+
 void printBuff();
 
 #endif //SOFTWARE_UTILS_H

@@ -9,8 +9,11 @@
 #include "main.h"
 
 void clearResponseBuffer();
+
 void addCRCToBuffer(uint8_t bufferLength);
+
 void prepareResponse(uint8_t cmd, byte msg[], uint8_t msgLen);
+
 void sendResponse();
 
 #endif //SOFTWARE_RESPONSEHELPER_H

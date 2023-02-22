@@ -10,68 +10,68 @@
 #define MSG_WRITE_DATASET 0xBF
 
 bool workDataWriteOrPing() {
-  if(!prepareNextDataWrite()) {
-    byte ret[1];
-    ret[0] = 0x80;
-    prepareResponse(0x08, ret, 1);
-  }
-  return true;
+    if (!prepareNextDataWrite()) {
+        byte ret[1];
+        ret[0] = 0x80;
+        prepareResponse(0x08, ret, 1);
+    }
+    return true;
 }
 
 bool workRequestN(uint8_t addr, uint8_t len) {
-  uint8_t retLen = 0;
-  byte ret[8];
-  switch (addr) {
-    case 0xF8:
-      retLen = 8;
-      ret[0] = 0xF8;
-      ret[1] = DEVICE_CLASS;
-      ret[2] = 0xF9;
-      ret[3] = DEVICE_ID;
-      ret[4] = 0xFA;
-      ret[5] = DEVICE_SN1;
-      ret[6] = 0xFB;
-      ret[7] = DEVICE_SN2;
-    break;
-    default:
-      DEBUG_SERIAL.print("invalid n address requested: ");
-      DEBUG_SERIAL.println(addr);
-      return false;
-    break;
-  }
-  prepareResponse(0xB3, ret, retLen);
-  return true;
+    uint8_t retLen = 0;
+    byte ret[8];
+    switch (addr) {
+        case 0xF8:
+            retLen = 8;
+            ret[0] = 0xF8;
+            ret[1] = DEVICE_CLASS;
+            ret[2] = 0xF9;
+            ret[3] = DEVICE_ID;
+            ret[4] = 0xFA;
+            ret[5] = DEVICE_SN1;
+            ret[6] = 0xFB;
+            ret[7] = DEVICE_SN2;
+            break;
+        default:
+            DebugSerial.print("invalid n address requested: ");
+            DebugSerial.println(addr);
+            return false;
+            break;
+    }
+    prepareResponse(0xB3, ret, retLen);
+    return true;
 }
 
 bool workRequest1(uint8_t addr) {
-  DEBUG_SERIAL.println("workRequest1 RECEIVED BUT NOT HANDLED");
-  byte ret[1];
-  
-  switch (addr) {
-    case 0xF8:
-      ret[0] = 0x11;
-    break;
-    default:
-      DEBUG_SERIAL.print("invalid n address requested: ");
-      DEBUG_SERIAL.println(addr);
-      return false;
-    break;
-  }
-  
-  prepareResponse(0xB1, ret, 1);
-  return true;
+    DebugSerial.println("workRequest1 RECEIVED BUT NOT HANDLED");
+    byte ret[1];
+
+    switch (addr) {
+        case 0xF8:
+            ret[0] = 0x11;
+            break;
+        default:
+            DebugSerial.print("invalid n address requested: ");
+            DebugSerial.println(addr);
+            return false;
+            break;
+    }
+
+    prepareResponse(0xB1, ret, 1);
+    return true;
 }
 
 bool workWriteDataset(byte buffer[], uint8_t bufferLength) {
-  byte writeType = buffer[0];
+    byte writeType = buffer[0];
 
-  switch(writeType) {
-    case 0x1D:
-      for(uint8_t i = 1; i < bufferLength; i++) buffer[i] = buffer[i] ^ 0xAA;
-      return false;
-    default:
-      return false;
-  }
+    switch (writeType) {
+        case 0x1D:
+            for (uint8_t i = 1; i < bufferLength; i++) buffer[i] = buffer[i] ^ 0xAA;
+            return false;
+        default:
+            return false;
+    }
 }
 
 // will return whether or not the message could be processed
@@ -93,7 +93,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
         lastHeaterCommandReceivedAt = millis();
     }
 
-    switch(cmd) {
+    switch (cmd) {
         case MSG_PING:
             return workDataWriteOrPing();
         case MSG_READ_REQUEST_1:
@@ -103,9 +103,9 @@ bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
         case MSG_WRITE_DATASET:
             return workWriteDataset(msg, msgLen);
         default:
-            DEBUG_SERIAL.println("not sure how to handle message:");
-            printAsHex(&DEBUG_SERIAL, buff, buffLen);
-            DEBUG_SERIAL.println();
+            DebugSerial.println("not sure how to handle message:");
+            printAsHex(&DebugSerial, buff, buffLen);
+            DebugSerial.println();
             return false;
     }
 }
