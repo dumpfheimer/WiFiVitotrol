@@ -18,13 +18,19 @@ unsigned long bufferReadStart = 0;
 short expectedMessageLength = 0;
 // time when the last command was received (wifi->esp)
 unsigned long lastCommandReceivedAt = 0;
+// time when the last character was received from heater
+unsigned long lastReadAt = 0;
+// time when the last message was received from heater
+unsigned long lastMessageAt = 0;
+// time when the last valid message was received from heater
+unsigned long lastValidMessageAt = 0;
 // time when the last command was received (heater->esp; other than discovery)
 unsigned long lastHeaterCommandReceivedAt = 0;
-// fake a ping message for testing purposes
-bool fakePingMessage = false;
-unsigned long lastFakePing = 0;
 
-//SoftwareSerial ModbusSerial(18, 19, false);
+unsigned long lastMessageWithResponseAt = 0;
+unsigned long lastMessageWithoutResponseAt = 0;
+unsigned long lastResponseWrittenAt = 0;
+unsigned long lastResponseTime = 0;
 
 #if THREADED == true
 TaskHandle_t serialTaskHandle;
@@ -32,8 +38,10 @@ TaskHandle_t serialTaskHandle;
 
 void setup() {
     ModbusSerial.begin(1200, MODBUS_BAUD, 18, 19, false);
-    DebugSerial.begin(9600);
-    DebugSerial.println("STARTING");
+#if DEBUG == true
+    DebugSerial.begin(500000);
+    debugPrintln("STARTING");
+#endif
 
     clearBuff();
 
@@ -43,14 +51,14 @@ void setup() {
     setupWifi();
 
 #if THREADED == true
-    xTaskCreatePinnedToCore(
+    xTaskCreate(
                       serialLoopForever,   /* Task function. */
                       "serialLoopTask",     /* name of task. */
                       10000,       /* Stack size of task */
                       NULL,        /* parameter of the task */
                       1,           /* priority of the task */
-                      &serialTaskHandle,      /* Task handle to keep track of created task */
-                      1);          /* pin task to core 1 */
+                      &serialTaskHandle      /* Task handle to keep track of created task */
+                      );          /* pin task to core 1 */
 #endif
 }
 
@@ -58,117 +66,105 @@ void serialLoop() {
     // after timeout (1 hour) reboot.
     if (((millis() - lastHeaterCommandReceivedAt > rebootTimeout) ||
             (millis() - lastCommandReceivedAt) > rebootTimeout)) {
-        DebugSerial.println("REBOOT");
-        DebugSerial.flush();
+        debugPrintln("REBOOT");
         delay(1000);
         ESP.restart();
     }
     // only speak to heater when no datapoint is preventing it
     if (!preventCommunication()) {
-        if (millis() > bufferReadStart + 500 && bufferPointer > 0) {
+        if (millis() - bufferReadStart > 500 && bufferPointer > 0) {
             // receiving took longer than 1s. dump!
-            DebugSerial.println("\r\nTIMEOUT WHILE READING MESSAGE");
-            DebugSerial.println(expectedMessageLength);
-            DebugSerial.println(bufferPointer);
-            DebugSerial.println(bufferReadStart);
+            debugPrintln("\r\nTIMEOUT WHILE READING MESSAGE");
+            debugPrintln(expectedMessageLength);
+            debugPrintln(bufferPointer);
+            debugPrintln(bufferReadStart);
             printBuff();
             clearBuff();
         }
 
-        while (ModbusSerial.available()) {
-            fakePingMessage = false;
-            // if it is the first byte received, store the time (for timeout)
-            if (bufferPointer == 0) bufferReadStart = millis();
-            // read the byte
-            byte receiveByte = ModbusSerial.read();   // Read the byte
-
-            // read while buffer is not full
-            if (bufferPointer < BUFFER_LEN) {
-                // still receiving message. fill buffer
-                buffer[bufferPointer] = receiveByte;
-                // the length of the message is sent at pos 3. store it as expectedMessageLength for readability
-                if (bufferPointer == 3) {
-                    expectedMessageLength = receiveByte;
-                }
-                bufferPointer++;
-            } else {
-                DebugSerial.println("BUFFER OVERFLOW");
+        // read while buffer is not full
+        if (bufferPointer >= BUFFER_LEN) {
+#if DEBUG == true
+            debugPrintln("BUFFER OVERFLOW");
                 printBuff();
-                clearBuff();
+#endif
+            clearBuff();
+        }
+
+        while (ModbusSerial.available() && bufferPointer < BUFFER_LEN) {
+            // if it is the first byte received, store the time (for timeout)
+            if (bufferPointer == 0) {
+                bufferReadStart = millis();
             }
+            // read the byte
+            buffer[bufferPointer++] = ModbusSerial.read();   // Read the byte
+            lastReadAt = millis();
+
             // if the message length matches the bufferPointer
-            if (expectedMessageLength == bufferPointer && bufferPointer > 3) {
+            if (buffer[3] == bufferPointer && bufferPointer > 4) {
+                lastMessageAt = millis();
                 // message received completely. work it!
                 // first check the checksum
                 if (isValidCRC(buffer, bufferPointer)) {
+                    lastValidMessageAt = millis();
                     // workMessageAndCreateResponseBuffer returnes true when the message was processed successfully
                     if (workMessageAndCreateResponseBuffer(buffer, bufferPointer)) {
+                        lastMessageWithResponseAt = millis();
                         // message was processed successfully. send the response
                         sendResponse();
+                        lastResponseWrittenAt = millis();
+                        lastResponseTime = lastResponseWrittenAt - lastReadAt;
 
-                        if (ModbusSerial.available()) {
-                            // somethimes the TI MBUS chip will read the values that are written. consume them to ensure the next bytes read are clean
-                            DebugSerial.println("RECEIVED SOMETHING WHILE SENDING:");
-                            while (ModbusSerial.available()) {
-                                //ModbusSerial.read();
-                                DebugSerial.print(ModbusSerial.read(), HEX);
-                                DebugSerial.print(" ");
-                            }
-                        }
-
+#if DEBUG == true
                         // debug print the request/response
-                        DebugSerial.print("OK: ");
+                        debugPrint("OK: ");
                         // debug print the received message
                         printAsHex(&DebugSerial, buffer, bufferPointer);
-                        DebugSerial.print("->");
+                        debugPrint("->");
                         // debug print the response message
                         printAsHex(&DebugSerial, responseBuffer, responseBuffer[3]);
-                        DebugSerial.println();
+                        debugPrintln("");
+#endif
                     } else {
+                        lastMessageWithoutResponseAt = millis();
+#if DEBUG == true
                         // debug print the unsuccessfully processed message
-                        DebugSerial.print("NOK: ");
+                        debugPrint("NOK: ");
                         printAsHex(&DebugSerial, buffer, bufferPointer);
-                        DebugSerial.println();
+                        debugPrintln("");
+#endif
                     }
+                    return;
                 } else {
+#if DEBUG == true
                     // invalid message
-                    DebugSerial.println("invalid message received:");
+                    debugPrintln("invalid message received:");
                     printAsHex(&DebugSerial, buffer, bufferPointer);
+#endif
                 }
                 // clear buffer
                 clearBuff();
             }
+#if THREADED == false
             yield();
-        }
-
-        // fake ping messages for testing
-        if (fakePingMessage && lastFakePing + 5000 < millis()) {
-            lastFakePing = millis();
-            DebugSerial.println("FAKE PING");
-            buffer[0] = 0x11;
-            buffer[1] = 0x00;
-            buffer[2] = 0x00;
-            workMessageAndCreateResponseBuffer(buffer, 9);
-            DebugSerial.print("FAKE OK: ");
-            printAsHex(&DebugSerial, responseBuffer, responseBuffer[3]);
-            DebugSerial.println();
+#endif
         }
     } else {
         // keep the serial buffer empty while not speaking to heater
-        while (ModbusSerial.available()) ModbusSerial.read();
-        if (bufferPointer > 0) clearBuff();
-
-        // fake ping messages for testing
-        if (fakePingMessage && lastFakePing + 5000 < millis()) {
-            lastFakePing = millis();
-            DebugSerial.println("FAKE PING: NOT CONNECTING");
+        while (ModbusSerial.available()) {
+            ModbusSerial.read();
+            yield();
         }
+        if (bufferPointer > 0) clearBuff();
     }
     yield();
 }
 
 void serialLoopForever(void *pvParameters) {
-    while (1) serialLoop();
+    while (1) {
+        serialLoop();
+        yield();
+    }
 }
 
 void loop() {

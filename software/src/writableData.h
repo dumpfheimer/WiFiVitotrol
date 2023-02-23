@@ -9,6 +9,7 @@
 
 #include "configuration.h"
 #include "dataEnums.h"
+#include "utils.h"
 
 class WritableData {
     char *name = NULL;

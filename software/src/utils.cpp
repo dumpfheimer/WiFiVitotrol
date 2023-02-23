@@ -13,21 +13,27 @@ void printAsHex(Stream *serial, byte *array, unsigned int len) {
 }
 
 void clearBuff() {
-    while (bufferPointer > 0) {
+    /*while (bufferPointer > 0) {
         buffer[bufferPointer] = 0;
         bufferPointer--;
     }
-    buffer[0] = 0;
+    buffer[0] = 0;*/
     bufferPointer = 0;
 }
 
 void printBuff() {
+#if DEBUG == true
     uint8_t i = 0;
-    DebugSerial.println("BUFFER:");
+    debugPrintln("BUFFER:");
     for (i = 0; i < bufferPointer; i = i + 1) {
-        DebugSerial.print(buffer[i], HEX);
-        DebugSerial.print(" ");
+        debugPrintHex(buffer[i]);
+        debugPrint(" ");
     }
-    DebugSerial.println("");
-    DebugSerial.flush();
+    debugPrintln("");
+#endif
+}
+void debugPrintHex(byte x) {
+#if DEBUG == true
+    DebugSerial.print(x, HEX);
+#endif
 }

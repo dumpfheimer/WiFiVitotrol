@@ -18,13 +18,13 @@ void wifiNotifyCommandReceived() {
 void wifiHandleGetData() {
     String uri = server.uri();
     String datapointName = uri.substring(4);
-    DebugSerial.println("Requested URI ");
-    DebugSerial.println(uri);
-    DebugSerial.println(datapointName);
+    debugPrintln("Requested URI ");
+    debugPrintln(uri);
+    debugPrintln(datapointName);
 
     WritableData *datapoint = getWritableDataByName(datapointName);
 
-    if (datapoint == NULL) {
+    if (datapoint == nullptr) {
         // TODO: iterate over read-only-datapoints
         server.send(404, "text/plain", "NOT FOUND");
     }
@@ -35,13 +35,13 @@ void wifiHandleGetData() {
 void wifiHandleSetData() {
     String uri = server.uri();
     String datapointName = uri.substring(4);
-    DebugSerial.println("Requested URI ");
-    DebugSerial.println(uri);
-    DebugSerial.println(datapointName);
+    debugPrintln("Requested URI ");
+    debugPrintln(uri);
+    debugPrintln(datapointName);
 
     WritableData *datapoint = getWritableDataByName(datapointName);
 
-    if (datapoint == NULL) {
+    if (datapoint == nullptr) {
         server.send(404, "text/plain", "NOT FOUND");
     }
 
@@ -49,7 +49,7 @@ void wifiHandleSetData() {
     float floatValue;
     bool hasValue = false;
     bool forceWrite = false;
-    for (uint8_t i = 0; i < server.args(); i++) {
+    for (int i = 0; i < server.args(); i++) {
         if (server.argName(i) == "val") {
             strValue = server.arg(i).c_str();
             floatValue = strValue.toFloat();
@@ -73,13 +73,13 @@ void wifiHandleSetData() {
 void wifiHandleGetSource() {
     String uri = server.uri();
     String datapointName = uri.substring(10);
-    DebugSerial.println("Requested URI ");
-    DebugSerial.println(uri);
-    DebugSerial.println(datapointName);
+    debugPrintln("Requested URI ");
+    debugPrintln(uri);
+    debugPrintln(datapointName);
 
     WritableData *datapoint = getWritableDataByName(datapointName);
 
-    if (datapoint == NULL) {
+    if (datapoint == nullptr) {
         // TODO: iterate over read-only-datapoints
         server.send(404, "text/plain", "NOT FOUND");
     }
@@ -107,18 +107,32 @@ void wifiHandleGetOverview() {
     } else {
         ret += "Communication is not prevented\r\n";
     }
+    unsigned long m = millis();
+    ret += "\r\nLast com: " + String(m - lastHeaterCommandReceivedAt) + "ms";
+    ret += "\r\nLast read: " + String(m - lastReadAt) + "ms";
+    ret += "\r\nLast message: " + String(m - lastMessageAt) + "ms";
+    ret += "\r\nLast message - last read: " + String(lastMessageAt - lastReadAt) + "ms";
+    ret += "\r\nLast response time: " + String(lastResponseTime) + "ms";
+    ret += "\r\nLast valid message: " + String(m - lastValidMessageAt) + "ms";
+    ret += "\r\nLast valid message with response: " + String(m - lastMessageWithResponseAt) + "ms";
+    ret += "\r\nLast valid message without response: " + String(m - lastMessageWithoutResponseAt) + "ms";
+    ret += "\r\nLast response: " + String(m - lastMessageWithoutResponseAt) + "ms";
+    ret += "\r\nUptime: " + String(m/1000) + "s\r\n\r\n";
+    ret += "\r\n\r\n" + String(buffer[0], HEX) + "-" + String(buffer[1], HEX) + "-" + String(buffer[2], HEX) + "-" + String(buffer[3], HEX) + "-" + String(buffer[4], HEX) + "-" + String(buffer[5], HEX);
+    ret += "\r\n" + String(buffer[6], HEX) + "-" + String(buffer[7], HEX) + "-" + String(buffer[8], HEX) + "-" + String(buffer[9], HEX) + "-" + String(buffer[10], HEX) + "-" + String(buffer[11], HEX) + "\r\n\r\n";
+
     ret += "Data points:\r\n";
 
     uint8_t p = 0;
-    while (writableDataPoint[p] != NULL) {
+    while (writableDataPoint[p] != nullptr) {
         ret += "\r\n\r\nName: " + String(writableDataPoint[p]->getName()) + "\r\n";
         ret += "  Value: " + String(writableDataPoint[p]->getValue()) + "\r\n";
         ret += "  Send Value: " + String(writableDataPoint[p]->getSendValue(), HEX) + "\r\n";
         ret += "  Prevent communication: " + String(writableDataPoint[p]->preventCommunication()) + "\r\n";
         ret += "  Has valid value: " + String(writableDataPoint[p]->getHasValidValue()) + "\r\n";
         ret += "  Write pending: " + String(writableDataPoint[p]->wantsToSendValue()) + "\r\n";
-        ret += "  Last send: " + String(millis() - writableDataPoint[p]->getLastSend()) + "ms ago\r\n";
-        ret += "  Last set: " + String(millis() - writableDataPoint[p]->getLastSet()) + "ms ago\r\n";
+        ret += "  Last send: " + String(m - writableDataPoint[p]->getLastSend()) + "ms ago\r\n";
+        ret += "  Last set: " + String(m - writableDataPoint[p]->getLastSet()) + "ms ago\r\n";
         ret += "  Periodic send every " + String(writableDataPoint[p]->getPeriodicSend()) + "ms\r\n";
         ret += "  Prevent communication after " + String(writableDataPoint[p]->getPreventCommunicationAfter()) +
                "ms\r\n";
@@ -137,7 +151,7 @@ void wifiHandleIsPreventCommunication() {
 }
 
 void wifiHandleIsConnected() {
-    if (lastHeaterCommandReceivedAt > 0 && lastHeaterCommandReceivedAt + 60000 >= millis()) {
+    if (lastHeaterCommandReceivedAt > 0 && millis() - lastHeaterCommandReceivedAt < 60000) {
         server.send(200, "text/plain", "true");
     } else {
         server.send(200, "text/plain", "false");
@@ -153,18 +167,18 @@ void wifiHandleReboot() {
 // ... setup wifi
 void setupWifi() {
     WiFi.begin(wifiSSID, wifiPassword);
-    WiFi.setAutoConnect(true);
+    //WiFi.setAutoReconnect(true);
 #ifdef ESP32
     WiFi.setHostname(wifiHost);
 #endif
 
     uint8_t p = 0;
-    while (writableDataPoint[p] != NULL) {
+    while (writableDataPoint[p] != nullptr) {
         server.on("/get" + String(writableDataPoint[p]->getName()), wifiHandleGetData);
         server.on("/set" + String(writableDataPoint[p]->getName()), HTTP_POST, wifiHandleSetData);
         server.on("/getSource" + String(writableDataPoint[p]->getName()), wifiHandleGetSource);
-        DebugSerial.print("dynamically created handler /get- and /set");
-        DebugSerial.println(String(writableDataPoint[p]->getName()));
+        debugPrint("dynamically created handler /get- and /set");
+        debugPrintln(String(writableDataPoint[p]->getName()));
         p++;
     }
 
@@ -174,14 +188,14 @@ void setupWifi() {
     server.on("/isConnected", wifiHandleIsConnected);
     server.on("/reboot", wifiHandleReboot);
 
-    DebugSerial.println("Connecting to WiFi..");
+    debugPrintln("Connecting to WiFi..");
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
     }
     if (!MDNS.begin(wifiHost)) {
-        DebugSerial.println("Error setting up MDNS responder!");
+        debugPrintln("Error setting up MDNS responder!");
     }
-    DebugSerial.println(WiFi.localIP());
+    debugPrintln(WiFi.localIP());
 
     ElegantOTA.begin(&server);
 

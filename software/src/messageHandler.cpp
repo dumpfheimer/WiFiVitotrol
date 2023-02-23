@@ -34,8 +34,8 @@ bool workRequestN(uint8_t addr, uint8_t len) {
             ret[7] = DEVICE_SN2;
             break;
         default:
-            DebugSerial.print("invalid n address requested: ");
-            DebugSerial.println(addr);
+            debugPrint("invalid n address requested: ");
+            debugPrintln(addr);
             return false;
             break;
     }
@@ -44,7 +44,7 @@ bool workRequestN(uint8_t addr, uint8_t len) {
 }
 
 bool workRequest1(uint8_t addr) {
-    DebugSerial.println("workRequest1 RECEIVED BUT NOT HANDLED");
+    debugPrintln("workRequest1 RECEIVED BUT NOT HANDLED");
     byte ret[1];
 
     switch (addr) {
@@ -52,8 +52,8 @@ bool workRequest1(uint8_t addr) {
             ret[0] = 0x11;
             break;
         default:
-            DebugSerial.print("invalid n address requested: ");
-            DebugSerial.println(addr);
+            debugPrint("invalid n address requested: ");
+            debugPrintln(addr);
             return false;
             break;
     }
@@ -86,7 +86,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
     if (destinationClass != 0x11) return false;
     if (sourceClass != 0x00) return false;
 
-    byte *msg = buff + 6;
+    byte *msg = &buff[6];
     uint8_t msgLen = len - 6 - 2; // 6=header 2=crc
 
     if (cmd != MSG_READ_REQUEST_N || msg[0] != 0xF8) {
@@ -103,9 +103,11 @@ bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
         case MSG_WRITE_DATASET:
             return workWriteDataset(msg, msgLen);
         default:
-            DebugSerial.println("not sure how to handle message:");
+#if DEBUG == true
+            debugPrintln("not sure how to handle message:");
             printAsHex(&DebugSerial, buff, buffLen);
-            DebugSerial.println();
+            debugPrintln("");
+#endif
             return false;
     }
 }

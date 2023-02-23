@@ -22,6 +22,7 @@
 #include "messageHandler.h"
 #include "crc.h"
 #include "writableData.h"
+#include "utils.h"
 
 //        BUFFER CONFIGURATION
 // stick to 255 to prevent uint8 of overflowing
@@ -36,7 +37,13 @@ extern byte buffer[BUFFER_LEN];
 extern byte responseBuffer[BUFFER_LEN];
 extern uint8_t bufferPointer;
 extern unsigned long lastHeaterCommandReceivedAt;
+extern unsigned long lastReadAt;
 extern unsigned long lastCommandReceivedAt;
+extern unsigned long lastMessageAt;
+extern unsigned long lastValidMessageAt;
+extern unsigned long lastMessageWithResponseAt;
+extern unsigned long lastMessageWithoutResponseAt;
+extern unsigned long lastResponseTime;
 
 void serialLoopForever(void *pvParameters);
 

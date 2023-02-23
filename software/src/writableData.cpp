@@ -52,7 +52,7 @@ bool WritableData::wantsToSendValue() {
     if (this->periodicSend == 0) {
         return false;
     } else {
-        return this->lastSend == 0 || this->lastSend + this->periodicSend < millis();
+        return this->lastSend == 0 || millis() - this->lastSend > this->periodicSend;
     }
 }
 
@@ -130,7 +130,7 @@ void WritableData::init(String name, DataType t, unsigned long periodicSend, voi
 
 class WritableData *getWritableDataByName(String name) {
     uint8_t p = 0;
-    while (writableDataPoint[p] != NULL) {
+    while (writableDataPoint[p] != nullptr) {
         //if(strcmp(writableDataPoint[p]->name, name) == 0) {
         if (name.compareTo(writableDataPoint[p]->getName()) == 0) {
             return writableDataPoint[p];
@@ -143,10 +143,10 @@ class WritableData *getWritableDataByName(String name) {
 class WritableData *
 createWritableDataPoint(String name, DataType t, unsigned long periodicSend, void (*preparationFunction)()) {
     uint8_t p = 0;
-    while (writableDataPoint[p] != NULL) p++;
+    while (writableDataPoint[p] != nullptr) p++;
 
     if (p >= WRITABLE_DATAPOINT_SIZE) {
-        DebugSerial.println(
+        debugPrintln(
                 "ERROR: createWritableDataPoint called, but array is full. Increase WRITABLE_DATAPOINT_SIZE");
         return NULL;
     }
@@ -158,7 +158,7 @@ createWritableDataPoint(String name, DataType t, unsigned long periodicSend, voi
 
 bool prepareNextDataWrite() {
     uint8_t p = 0;
-    while (writableDataPoint[p] != NULL) {
+    while (writableDataPoint[p] != nullptr) {
         if (writableDataPoint[p]->wantsToSendValue()) {
             writableDataPoint[p]->prepare();
             return true;
@@ -170,7 +170,7 @@ bool prepareNextDataWrite() {
 
 bool preventCommunication() {
     uint8_t p = 0;
-    while (writableDataPoint[p] != NULL) {
+    while (writableDataPoint[p] != nullptr) {
         if (writableDataPoint[p]->preventCommunication()) {
             return true;
         }
