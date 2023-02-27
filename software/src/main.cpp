@@ -8,6 +8,8 @@ const long rebootTimeout = REBOOT_TIMEOUT; // 15 minutes
 // the read buffer
 // data we receive from the heater
 byte buffer[BUFFER_LEN];
+byte lastValidMessage[BUFFER_LEN];
+byte lastInvalidMessage[BUFFER_LEN];
 // the write buffer
 byte responseBuffer[BUFFER_LEN];
 // the next slot to write into the read buffer
@@ -30,22 +32,21 @@ unsigned long lastHeaterCommandReceivedAt = 0;
 unsigned long lastMessageWithResponseAt = 0;
 unsigned long lastMessageWithoutResponseAt = 0;
 unsigned long lastResponseWrittenAt = 0;
+unsigned long lastBroadcastMessage = 0;
 unsigned long lastResponseTime = 0;
 unsigned long sendDelay = 0;
+uint8_t requestDataset = 0;
+int readInt = 0;
 byte readByte = 0;
-
-#if THREADED == true
-TaskHandle_t serialTaskHandle;
-#endif
 
 void serialLoop();
 
 void setup() {
     ModbusSerial.begin(1200, MODBUS_BAUD, 17, 16, false);
-#if THREADED == false
+
     ModbusSerial.onReceive(serialLoop, false);
     ModbusSerial.setRxTimeout(1);
-#endif
+
 #if DEBUG == true
     DebugSerial.begin(500000);
     debugPrintln("STARTING");
@@ -58,17 +59,6 @@ void setup() {
     configureData();
 
     setupWifi();
-
-#if THREADED == true
-    xTaskCreatePinnedToCore(
-                      serialLoopForever,   /* Task function. */
-                      "serialLoopTask",     /* name of task. */
-                      10000,       /* Stack size of task */
-                      NULL,        /* parameter of the task */
-                      1,           /* priority of the task */
-                      &serialTaskHandle      /* Task handle to keep track of created task */
-                      , 1);          /* pin task to core 1 */
-#endif
 }
 
 void serialLoop() {
@@ -92,17 +82,14 @@ void serialLoop() {
 #endif
         clearBuff();
     }
-
-    while (ModbusSerial.available()) {
+    readInt = ModbusSerial.read();
+    if (readInt >= 0) {
         // if it is the first byte received, store the time (for timeout)
         if (bufferPointer == 0) {
             bufferReadStart = millis();
         }
         // read the byte
-        readByte = ModbusSerial.read();
-        if (bufferPointer == 0 && readByte != 0x11) {
-            return;
-        }
+        readByte = (byte) readInt;
         if (bufferPointer == 0) {
             clearBuff(true);
         }
@@ -117,35 +104,42 @@ void serialLoop() {
             // first check the checksum
             if (isValidCRC(buffer, bufferPointer)) {
                 lastValidMessageAt = millis();
+                if (buffer[0] == 0xFF) {
+                    lastBroadcastMessage = millis();
+                }
                 // workMessageAndCreateResponseBuffer returnes true when the message was processed successfully
-                if (workMessageAndCreateResponseBuffer(buffer, bufferPointer)) {
-                    lastMessageWithResponseAt = millis();
-                    delay(sendDelay);
-                    // message was processed successfully. send the response
-                    sendResponse();
-                    lastResponseWrittenAt = millis();
-                    lastResponseTime = lastMessageWithResponseAt - lastReadAt;
+                if ((buffer[0] == 0xFF || buffer[0] == DEVICE_CLASS) && buffer[4] == DEVICE_SLOT) {
+                    memcpy(lastValidMessage, buffer, BUFFER_LEN);
+                    if (workMessageAndCreateResponseBuffer(buffer, bufferPointer)) {
+                        lastMessageWithResponseAt = millis();
+                        delay(sendDelay);
+                        // message was processed successfully. send the response
+                        sendResponse();
+                        lastResponseWrittenAt = millis();
+                        lastResponseTime = lastMessageWithResponseAt - lastReadAt;
 
-                    delay(100);
-                    while (ModbusSerial.available()) ModbusSerial.read();
+                        //while (ModbusSerial.available()) ModbusSerial.read();
 #if DEBUG == true
-                    // debug print the request/response
-                    debugPrint("OK: ");
-                    // debug print the received message
-                    printAsHex(&DebugSerial, buffer, bufferPointer);
-                    debugPrint("->");
-                    // debug print the response message
-                    printAsHex(&DebugSerial, responseBuffer, responseBuffer[3]);
-                    debugPrintln("");
+                        // debug print the request/response
+                        debugPrint("OK: ");
+                        // debug print the received message
+                        printAsHex(&DebugSerial, buffer, bufferPointer);
+                        debugPrint("->");
+                        // debug print the response message
+                        printAsHex(&DebugSerial, responseBuffer, responseBuffer[3]);
+                        debugPrintln("");
 #endif
+                    } else {
+                        lastMessageWithoutResponseAt = millis();
+#if DEBUG == true
+                        // debug print the unsuccessfully processed message
+                        debugPrint("NOK: ");
+                        printAsHex(&DebugSerial, buffer, bufferPointer);
+                        debugPrintln("");
+#endif
+                    }
                 } else {
-                    lastMessageWithoutResponseAt = millis();
-#if DEBUG == true
-                    // debug print the unsuccessfully processed message
-                    debugPrint("NOK: ");
-                    printAsHex(&DebugSerial, buffer, bufferPointer);
-                    debugPrintln("");
-#endif
+                    memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
                 }
                 return;
             } else {

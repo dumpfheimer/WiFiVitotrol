@@ -10,6 +10,5 @@ const long rebootTimeout = 1000 * 60 * 15; // 15 minutes
 #define ModbusSerial Serial1
 #define ModbusSerial Serial1
 #define DebugSerial Serial
-#define THREADED false
 
 #endif // CONFIGURATION_H

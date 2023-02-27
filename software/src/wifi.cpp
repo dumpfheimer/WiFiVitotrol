@@ -115,6 +115,7 @@ void wifiHandleGetOverview() {
     ret += "\r\nLast message - last read: " + String(lastMessageAt - lastReadAt) + "ms";
     ret += "\r\nLast response time: " + String(lastResponseTime) + "ms";
     ret += "\r\nLast valid message: " + String(m - lastValidMessageAt) + "ms";
+    ret += "\r\nLast valid broadcast message: " + String(m - lastBroadcastMessage) + "ms";
     ret += "\r\nLast valid message with response: " + String(m - lastMessageWithResponseAt) + "ms";
     ret += "\r\nLast valid message without response: " + String(m - lastMessageWithoutResponseAt) + "ms";
     ret += "\r\nLast response: " + String(m - lastResponseTime) + "ms";
@@ -122,11 +123,23 @@ void wifiHandleGetOverview() {
 
     ret += "Receive Buffer:\r\n";
     ret += "len: " + String(buffer[3]);
+    ret += "\r\nptr: " + String((unsigned) &buffer, HEX);
     ret += "\r\ncontent: \r\n";
-    for (int i = 0; i < buffer[3] + 16; i++) ret += String(buffer[i], HEX) + "-";
+    for (int i = 0; i < buffer[3]; i++) ret += String(buffer[i], HEX) + "-";
+    ret += "\r\n\r\nLast message:\r\n";
+    ret += "len: " + String(lastValidMessage[3]);
+    ret += "\r\nptr: " + String((unsigned) &lastValidMessage, HEX);
+    ret += "\r\ncontent: \r\n";
+    for (int i = 0; i < lastValidMessage[3]; i++) ret += String(lastValidMessage[i], HEX) + "-";
+    ret += "\r\n\r\nLast invalid message:\r\n";
+    ret += "len: " + String(lastInvalidMessage[3]);
+    ret += "\r\nptr: " + String((unsigned) &lastInvalidMessage, HEX);
+    ret += "\r\ncontent: \r\n";
+    for (int i = 0; i < lastInvalidMessage[3]; i++) ret += String(lastInvalidMessage[i], HEX) + "-";
 
     ret += "\r\n\r\nResponse Buffer:\r\n";
     ret += "len: " + String(responseBuffer[3]);
+    ret += "\r\nptr: " + String((unsigned) &responseBuffer, HEX);
     ret += "\r\ncontent: \r\n";
     for (int i = 0; i < responseBuffer[3]; i++) ret += String(responseBuffer[i], HEX) + "-";
 
@@ -161,7 +174,7 @@ void wifiHandleReadDatasets() {
                     ret += String(d->data[i]);
                     if (i+1 < d->len) ret += ",";
                 }
-                ret += "{}]";
+                ret += "]";
             }
         }
     ret += "}";
@@ -199,6 +212,11 @@ void wifiHandleSetSendDelay() {
     server.send(200, "text/plain", String(sendDelay));
 }
 
+void wifiHandleRequestDataset() {
+    if (server.hasArg("id")) requestDataset = server.arg("id").toInt();
+    server.send(200, "text/plain", String(requestDataset));
+}
+
 void wifiHandleReboot() {
     server.send(200, "text/plain", "ok");
     delay(100);
@@ -231,6 +249,7 @@ void setupWifi() {
     server.on("/registers", wifiHandleReadRegisters);
     server.on("/datasets", wifiHandleReadDatasets);
     server.on("/setSendDelay", wifiHandleSetSendDelay);
+    server.on("/requestDataset", wifiHandleRequestDataset);
 
     debugPrintln("Connecting to WiFi..");
     while (WiFi.status() != WL_CONNECTED) {

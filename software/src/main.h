@@ -36,6 +36,8 @@ extern const char *wifiHost;
 extern const long rebootTimeout;
 
 extern byte buffer[BUFFER_LEN];
+extern byte lastValidMessage[BUFFER_LEN];
+extern byte lastInvalidMessage[BUFFER_LEN];
 extern byte responseBuffer[BUFFER_LEN];
 extern uint8_t bufferPointer;
 extern unsigned long lastHeaterCommandReceivedAt;
@@ -48,6 +50,8 @@ extern unsigned long lastMessageWithoutResponseAt;
 extern unsigned long lastResponseTime;
 extern unsigned long sendDelay;
 extern byte readByte;
+extern uint8_t requestDataset;
+extern unsigned long lastBroadcastMessage;
 
 void serialLoopForever(void *pvParameters);
 
