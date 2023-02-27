@@ -17,6 +17,7 @@
 #endif
 void printAsHex(Stream *serial, byte *array, unsigned int len);
 void clearBuff();
+void clearBuff(bool zero);
 void printBuff();
 void debugPrintHex(byte x);
 

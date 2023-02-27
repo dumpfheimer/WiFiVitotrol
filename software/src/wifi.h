@@ -9,6 +9,7 @@
 #include "dataEnums.h"
 #include "writableData.h"
 #include "main.h"
+#include "dataset.h"
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>

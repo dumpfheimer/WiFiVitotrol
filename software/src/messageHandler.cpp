@@ -1,77 +1,59 @@
 #include "messageHandler.h"
 
 #define MSG_PING 0x00
-#define MSG_READ_REQUEST_1 0x31
-#define MSG_READ_REQUEST_N 0x33
-#define MSG_READ_REQUEST_DATASET 0x3F
+#define MSG_MASTER_REQUESTING_REQUEST_1 0x31
+#define MSG_MASTER_REQUESTING_REQUEST_N 0x33
+#define MSG_MASTER_REQUESTING_REQUEST_DATASET 0x3F
 #define MSG_PONG 0x80
-#define MSG_WRITE_DATA_1 0xB1
-#define MSG_WRITE_DATA_N 0xB3
-#define MSG_WRITE_DATASET 0xBF
+#define MST_MASTER_SENDING_DATA_1 0xB1
+#define MST_MASTER_SENDING_DATA_N 0xB3
+#define MST_MASTER_SENDING_DATASET 0xBF
 
-bool workDataWriteOrPing() {
+byte requestedDataResponseBuffer[512] = {0};
+
+bool workPing() {
     if (!prepareNextDataWrite()) {
-        byte ret[1];
-        ret[0] = 0x80;
-        prepareResponse(0x08, ret, 1);
+        requestedDataResponseBuffer[0] = 0x80;
+        prepareResponse(0x08, requestedDataResponseBuffer, 1);
     }
     return true;
 }
 
-bool workRequestN(uint8_t addr, uint8_t len) {
-    uint8_t retLen = 0;
-    byte ret[8];
-    switch (addr) {
-        case 0xF8:
-            retLen = 8;
-            ret[0] = 0xF8;
-            ret[1] = DEVICE_CLASS;
-            ret[2] = 0xF9;
-            ret[3] = DEVICE_ID;
-            ret[4] = 0xFA;
-            ret[5] = DEVICE_SN1;
-            ret[6] = 0xFB;
-            ret[7] = DEVICE_SN2;
-            break;
-        default:
-            debugPrint("invalid n address requested: ");
-            debugPrintln(addr);
-            return false;
-            break;
+bool workMasterRequestedN(uint8_t addr, uint8_t len) {
+    for (int x = 0; x < len; x++) {
+        requestedDataResponseBuffer[2*x] = addr + x;
+        requestedDataResponseBuffer[2*x+1] = getRegisterValue(addr + x);
     }
-    prepareResponse(0xB3, ret, retLen);
+    prepareResponse(0xB3, requestedDataResponseBuffer, len * 2);
     return true;
 }
 
-bool workRequest1(uint8_t addr) {
-    debugPrintln("workRequest1 RECEIVED BUT NOT HANDLED");
-    byte ret[1];
+bool workMasterRequested1(uint8_t addr) {
+    requestedDataResponseBuffer[0] = addr;
+    requestedDataResponseBuffer[1] = getRegisterValue(addr);
 
-    switch (addr) {
-        case 0xF8:
-            ret[0] = 0x11;
-            break;
-        default:
-            debugPrint("invalid n address requested: ");
-            debugPrintln(addr);
-            return false;
-            break;
-    }
-
-    prepareResponse(0xB1, ret, 1);
+    prepareResponse(0xB1, requestedDataResponseBuffer, 2);
     return true;
 }
 
-bool workWriteDataset(byte buffer[], uint8_t bufferLength) {
-    byte writeType = buffer[0];
+bool workMasterSentDataset(byte message[], uint8_t messageLength) {
+    for (int i = 1; i < messageLength; i++) message[i] = message[i] ^ 0xAA;
+    setDataset(message[0], &message[1], messageLength - 1);
 
-    switch (writeType) {
-        case 0x1D:
-            for (uint8_t i = 1; i < bufferLength; i++) buffer[i] = buffer[i] ^ 0xAA;
-            return false;
-        default:
-            return false;
+    return true;
+}
+
+bool workMasterSent1(uint8_t addr, uint8_t value) {
+    setRegister(addr, 1, &value);
+    return true;
+}
+
+bool workMasterSentN(byte buffer[]) {
+    int regCount = buffer[0];
+    for (int x = 0; x < regCount; x++) {
+        setRegister(buffer[1+2*x], 1, &buffer[2+2*x]);
     }
+    return true;
 }
 
 // will return whether or not the message could be processed
@@ -89,19 +71,24 @@ bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
     byte *msg = &buff[6];
     uint8_t msgLen = len - 6 - 2; // 6=header 2=crc
 
-    if (cmd != MSG_READ_REQUEST_N || msg[0] != 0xF8) {
+    if (cmd != MSG_MASTER_REQUESTING_REQUEST_N || msg[0] != 0xF8) {
         lastHeaterCommandReceivedAt = millis();
     }
 
     switch (cmd) {
         case MSG_PING:
-            return workDataWriteOrPing();
-        case MSG_READ_REQUEST_1:
-            return workRequest1(buff[6]);
-        case MSG_READ_REQUEST_N:
-            return workRequestN(buff[6], buff[7]);
-        case MSG_WRITE_DATASET:
-            return workWriteDataset(msg, msgLen);
+            return workPing();
+        case MSG_MASTER_REQUESTING_REQUEST_1:
+            return workMasterRequested1(buff[6]);
+        case MSG_MASTER_REQUESTING_REQUEST_N:
+            return workMasterRequestedN(msg[0], msg[1]);
+        case MST_MASTER_SENDING_DATA_1:
+            return workMasterSent1(msg[0], msg[1]);
+        case MST_MASTER_SENDING_DATA_N:
+            return workMasterSentN(msg);
+        case MST_MASTER_SENDING_DATASET:
+            //return false;
+            return workMasterSentDataset(msg, msgLen);
         default:
 #if DEBUG == true
             debugPrintln("not sure how to handle message:");

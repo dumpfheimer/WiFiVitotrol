@@ -37,6 +37,7 @@ void sendResponse() {
     uint8_t startAtIndex = 0;
 
     for (uint8_t i = startAtIndex; i < responseBuffer[3] && i < BUFFER_LEN; i++) {
+        while (!ModbusSerial.availableForWrite()) yield();
         ModbusSerial.write(responseBuffer[i]);
     }
 

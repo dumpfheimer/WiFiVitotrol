@@ -11,14 +11,14 @@ void printAsHex(Stream *serial, byte *array, unsigned int len) {
         }
     }
 }
-
-void clearBuff() {
-    /*while (bufferPointer > 0) {
-        buffer[bufferPointer] = 0;
-        bufferPointer--;
+void clearBuff(bool zero) {
+    if (zero) {
+        for (int i = 0; i < BUFFER_LEN; i++) buffer[i] = 0;
     }
-    buffer[0] = 0;*/
     bufferPointer = 0;
+}
+void clearBuff() {
+    clearBuff(false);
 }
 
 void printBuff() {

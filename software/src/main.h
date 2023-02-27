@@ -23,6 +23,8 @@
 #include "crc.h"
 #include "writableData.h"
 #include "utils.h"
+#include "registers.h"
+#include "dataset.h"
 
 //        BUFFER CONFIGURATION
 // stick to 255 to prevent uint8 of overflowing
@@ -44,6 +46,8 @@ extern unsigned long lastValidMessageAt;
 extern unsigned long lastMessageWithResponseAt;
 extern unsigned long lastMessageWithoutResponseAt;
 extern unsigned long lastResponseTime;
+extern unsigned long sendDelay;
+extern byte readByte;
 
 void serialLoopForever(void *pvParameters);
 
