@@ -113,12 +113,10 @@ void wifiHandleGetOverview() {
     ret += " (" + String(readByte, HEX) + ")";
     ret += "\r\nLast message: " + String(m - lastMessageAt) + "ms";
     ret += "\r\nLast message - last read: " + String(lastMessageAt - lastReadAt) + "ms";
-    ret += "\r\nLast response time: " + String(lastResponseTime) + "ms";
     ret += "\r\nLast valid message: " + String(m - lastValidMessageAt) + "ms";
     ret += "\r\nLast valid broadcast message: " + String(m - lastBroadcastMessage) + "ms";
     ret += "\r\nLast valid message with response: " + String(m - lastMessageWithResponseAt) + "ms";
     ret += "\r\nLast valid message without response: " + String(m - lastMessageWithoutResponseAt) + "ms";
-    ret += "\r\nLast response: " + String(m - lastResponseTime) + "ms";
     ret += "\r\nUptime: " + String(m/1000) + "s\r\n\r\n";
 
     ret += "Receive Buffer:\r\n";
@@ -207,11 +205,6 @@ void wifiHandleIsConnected() {
     }
 }
 
-void wifiHandleSetSendDelay() {
-    if (server.hasArg("delay")) sendDelay = server.arg("delay").toInt();
-    server.send(200, "text/plain", String(sendDelay));
-}
-
 void wifiHandleRequestDataset() {
     if (server.hasArg("id")) requestDataset = server.arg("id").toInt();
     server.send(200, "text/plain", String(requestDataset));
@@ -226,7 +219,7 @@ void wifiHandleReboot() {
 // ... setup wifi
 void setupWifi() {
     WiFi.begin(wifiSSID, wifiPassword);
-    //WiFi.setAutoReconnect(true);
+    WiFi.setAutoReconnect(true);
 #ifdef ESP32
     WiFi.setHostname(wifiHost);
 #endif
@@ -248,7 +241,6 @@ void setupWifi() {
     server.on("/reboot", wifiHandleReboot);
     server.on("/registers", wifiHandleReadRegisters);
     server.on("/datasets", wifiHandleReadDatasets);
-    server.on("/setSendDelay", wifiHandleSetSendDelay);
     server.on("/requestDataset", wifiHandleRequestDataset);
 
     debugPrintln("Connecting to WiFi..");

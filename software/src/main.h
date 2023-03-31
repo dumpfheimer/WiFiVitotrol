@@ -47,8 +47,6 @@ extern unsigned long lastMessageAt;
 extern unsigned long lastValidMessageAt;
 extern unsigned long lastMessageWithResponseAt;
 extern unsigned long lastMessageWithoutResponseAt;
-extern unsigned long lastResponseTime;
-extern unsigned long sendDelay;
 extern byte readByte;
 extern uint8_t requestDataset;
 extern unsigned long lastBroadcastMessage;
