@@ -218,11 +218,11 @@ void wifiHandleReboot() {
 
 // ... setup wifi
 void setupWifi() {
+    WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
+    WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
     WiFi.begin(wifiSSID, wifiPassword);
     WiFi.setAutoReconnect(true);
-#ifdef ESP32
     WiFi.setHostname(wifiHost);
-#endif
 
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
