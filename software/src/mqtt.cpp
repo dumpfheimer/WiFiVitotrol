@@ -102,7 +102,6 @@ void mqttHandleMessage(char *topic, byte *payload, unsigned int length) {
 void mqttSetup() {
     client.setServer(MQTT_HOST, 1883);
     client.setCallback(mqttHandleMessage);
-    client.setBufferSize(350);
 }
 
 void mqttLoop() {
