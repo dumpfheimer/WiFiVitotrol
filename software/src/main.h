@@ -9,6 +9,7 @@
 #include <ElegantOTA.h>
 #include "dataEnums.h"
 #include "configuration.h"
+#include "mqtt.h"
 
 //        SERIAL CONFIGURATION
 #ifdef ESP8266
