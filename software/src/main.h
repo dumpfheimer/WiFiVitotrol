@@ -53,5 +53,6 @@ extern uint8_t requestDataset;
 extern unsigned long lastBroadcastMessage;
 
 void serialLoopForever(void *pvParameters);
+void notifyCommandReceived();
 
 #endif //SOFTWARE_MAIN_H

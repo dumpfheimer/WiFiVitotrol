@@ -7,10 +7,6 @@ ESP8266WebServer server(80);
 WebServer server(80);
 #endif
 
-void wifiNotifyCommandReceived() {
-    lastCommandReceivedAt = millis();
-}
-
 //
 //    THE HANDLERS
 //    -> callbacks for URLs
@@ -66,7 +62,7 @@ void wifiHandleSetData() {
         datapoint->setValueReceivedByWifi(floatValue, forceWrite);
         String ret = String(datapoint->getFloatValue());
         server.send(200, "text/plain", ret);
-        wifiNotifyCommandReceived();
+        notifyCommandReceived();
     } else {
         server.send(400, "text/plain", "val parameter is missing");
     }

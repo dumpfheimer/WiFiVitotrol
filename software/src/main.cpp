@@ -184,3 +184,7 @@ void loop() {
     mqttLoop();
 #endif
 }
+
+void notifyCommandReceived() {
+    lastCommandReceivedAt = millis();
+}

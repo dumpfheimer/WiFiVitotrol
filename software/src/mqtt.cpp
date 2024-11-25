@@ -93,9 +93,13 @@ void mqttHandleMessage(char *topic, byte *payload, unsigned int length) {
     if (strcmp(topic, "virtualvitotrol/currentRoomTemperature/set") == 0) {
         float temp = strtof(mqttMessageBuffer, nullptr);
         currentRoomTemperature->setValueReceivedByWifi(temp);
+        sendCurrentRoomTemperature();
+        notifyCommandReceived();
     } else if (strcmp(topic, "virtualvitotrol/desiredRoomTemperature/set") == 0) {
         float temp = strtof(mqttMessageBuffer, nullptr);
         desiredRoomTemperature->setValueReceivedByWifi(temp);
+        sendDesiredRoomTemperature();
+        notifyCommandReceived();
     }
 }
 
