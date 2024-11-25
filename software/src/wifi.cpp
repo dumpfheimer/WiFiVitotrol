@@ -7,10 +7,6 @@ ESP8266WebServer server(80);
 WebServer server(80);
 #endif
 
-void wifiNotifyCommandReceived() {
-    lastCommandReceivedAt = millis();
-}
-
 //
 //    THE HANDLERS
 //    -> callbacks for URLs
@@ -27,6 +23,7 @@ void wifiHandleGetData() {
     if (datapoint == nullptr) {
         // TODO: iterate over read-only-datapoints
         server.send(404, "text/plain", "NOT FOUND");
+        return;
     }
 
     server.send(200, "text/plain", String(datapoint->getFloatValue()));
@@ -43,6 +40,7 @@ void wifiHandleSetData() {
 
     if (datapoint == nullptr) {
         server.send(404, "text/plain", "NOT FOUND");
+        return;
     }
 
     String strValue;
@@ -64,7 +62,7 @@ void wifiHandleSetData() {
         datapoint->setValueReceivedByWifi(floatValue, forceWrite);
         String ret = String(datapoint->getFloatValue());
         server.send(200, "text/plain", ret);
-        wifiNotifyCommandReceived();
+        notifyCommandReceived();
     } else {
         server.send(400, "text/plain", "val parameter is missing");
     }
@@ -82,6 +80,7 @@ void wifiHandleGetSource() {
     if (datapoint == nullptr) {
         // TODO: iterate over read-only-datapoints
         server.send(404, "text/plain", "NOT FOUND");
+        return;
     }
 
     switch (datapoint->getSource()) {
@@ -168,9 +167,9 @@ void wifiHandleReadDatasets() {
             Dataset *d = getDataset(i);
             if (d != nullptr) {
                 ret += String(i) + ": [";
-                for (int i = 0; i < d->len; i++) {
-                    ret += String(d->data[i]);
-                    if (i+1 < d->len) ret += ",";
+                for (int i2 = 0; i2 < d->len; i2++) {
+                    ret += String(d->data[i2]);
+                    if (i2+1 < d->len) ret += ",";
                 }
                 ret += "]";
             }
@@ -210,6 +209,10 @@ void wifiHandleRequestDataset() {
     server.send(200, "text/plain", String(requestDataset));
 }
 
+void wifiHandleGetRequestDataset() {
+    server.send(200, "text/plain", String(requestDataset));
+}
+
 void wifiHandleReboot() {
     server.send(200, "text/plain", "ok");
     delay(100);
@@ -222,7 +225,7 @@ void setupWifi() {
     WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
     WiFi.begin(wifiSSID, wifiPassword);
     WiFi.setAutoReconnect(true);
-    WiFi.setHostname(wifiHost);
+    WiFiClass::setHostname(wifiHost);
 
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
@@ -242,9 +245,10 @@ void setupWifi() {
     server.on("/registers", wifiHandleReadRegisters);
     server.on("/datasets", wifiHandleReadDatasets);
     server.on("/requestDataset", wifiHandleRequestDataset);
+    server.on("/getRequestDataset", wifiHandleGetRequestDataset);
 
     debugPrintln("Connecting to WiFi..");
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFiClass::status() != WL_CONNECTED) {
         delay(100);
     }
     if (!MDNS.begin(wifiHost)) {

@@ -5,8 +5,13 @@ void prepareSendCurrentRoomTemperature() {
     // send current room temperature
     byte ret[4];
     ret[0] = 0x20;
-    ret[1] = currentRoomTemperature->getSendValue() ^ 0xAA;
-    ret[2] = 0x00 ^ 0xAA;
+    if (currentRoomTemperature->getFloatValue() > 25.5) {
+        ret[1] = ((int) currentRoomTemperature->getValue() - 256) ^ 0xAA;
+        ret[2] = 0x01 ^ 0xAA;
+    } else {
+        ret[1] = currentRoomTemperature->getSendValue() ^ 0xAA;
+        ret[2] = 0x00 ^ 0xAA;
+    }
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(0xBF, ret, 4);
 }

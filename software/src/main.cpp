@@ -57,6 +57,9 @@ void setup() {
     configureData();
 
     setupWifi();
+#ifdef MQTT_HOST
+    mqttSetup();
+#endif
 }
 
 void serialLoop() {
@@ -177,4 +180,11 @@ void loop() {
 
     // call wifi loop (and ultimately handle wifi clients)
     wifiLoop();
+#ifdef MQTT_HOST
+    mqttLoop();
+#endif
+}
+
+void notifyCommandReceived() {
+    lastCommandReceivedAt = millis();
 }
