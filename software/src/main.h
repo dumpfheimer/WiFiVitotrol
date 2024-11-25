@@ -9,6 +9,7 @@
 #include <ElegantOTA.h>
 #include "dataEnums.h"
 #include "configuration.h"
+#include "mqtt.h"
 
 //        SERIAL CONFIGURATION
 #ifdef ESP8266
@@ -52,5 +53,6 @@ extern uint8_t requestDataset;
 extern unsigned long lastBroadcastMessage;
 
 void serialLoopForever(void *pvParameters);
+void notifyCommandReceived();
 
 #endif //SOFTWARE_MAIN_H

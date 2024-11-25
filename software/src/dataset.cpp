@@ -6,7 +6,7 @@
 
 Dataset* datasets[DATASETS] = {nullptr};
 
-void setDataset(uint8_t datasetId, byte* dataset, uint8_t length) {
+void setDataset(uint8_t datasetId, const byte* dataset, uint8_t length) {
     if (datasetId >= DATASETS) return;
     if (datasets[datasetId] != nullptr) {
         if (datasets[datasetId]->data != nullptr) free(datasets[datasetId]->data);
