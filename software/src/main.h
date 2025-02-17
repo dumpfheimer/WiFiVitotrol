@@ -19,7 +19,7 @@
 #include "utils.h"
 #include "responseHelper.h"
 #include "dataConfiguration.h"
-#include "wifi.h"
+#include "./wifi.h"
 #include "messageHandler.h"
 #include "crc.h"
 #include "writableData.h"
