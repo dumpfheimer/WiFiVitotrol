@@ -1,4 +1,4 @@
-#include "./wifi.h"
+#include "./vito_wifi.h"
 
 #ifdef ESP8266
 ESP8266WebServer server(80);
