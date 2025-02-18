@@ -221,11 +221,13 @@ void wifiHandleReboot() {
 
 // ... setup wifi
 void setupWifi() {
+#if defined(ESP32)
     WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
     WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+#endif
     WiFi.begin(wifiSSID, wifiPassword);
     WiFi.setAutoReconnect(true);
-    WiFiClass::setHostname(wifiHost);
+    WiFi.hostname(wifiHost);
 
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
@@ -248,7 +250,7 @@ void setupWifi() {
     server.on("/getRequestDataset", wifiHandleGetRequestDataset);
 
     debugPrintln("Connecting to WiFi..");
-    while (WiFiClass::status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED) {
         delay(100);
     }
     if (!MDNS.begin(wifiHost)) {

@@ -40,10 +40,14 @@ byte readByte = 0;
 void serialLoop();
 
 void setup() {
+#if defined(ESP8266)
+    ModbusSerial.begin(1200, MODBUS_BAUD);
+#elif defined(ESP32)
     ModbusSerial.begin(1200, MODBUS_BAUD, 17, 16, false);
-
     ModbusSerial.onReceive(serialLoop, false);
     ModbusSerial.setRxTimeout(1);
+#endif
+
 
 #if DEBUG == true
     DebugSerial.begin(500000);
@@ -182,6 +186,9 @@ void loop() {
     wifiLoop();
 #ifdef MQTT_HOST
     mqttLoop();
+#endif
+#if defined(ESP8266)
+    serialLoop();
 #endif
 }
 
