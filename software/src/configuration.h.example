@@ -1,18 +1,20 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#define WIFI_SSID "CHANGEME"
-#define WIFI_PASSWORD "CHANGEME"
-#define WIFI_HOST "Virtual Vitotrol"
+// optional, can be configured over hotspot
+//#define WIFI_SSID "CHANGEME"
+//#define WIFI_PASSWORD "CHANGEME"
+//#define WIFI_HOST "Virtual Vitotrol"
 #define REBOOT_TIMEOUT (1000*60*15)
 
 
 
-# if you want to use MQTT, uncomment these lines and replace them accordingly
+// if you want to use MQTT, uncomment these lines and replace them accordingly
 
-#define MQTT_HOST "CHANGEME"
-#define MQTT_USER "CHANGEME"
-#define MQTT_PASS "CHANGEME"
+// optional, can be configured over hotspot
+//#define MQTT_HOST "CHANGEME"
+//#define MQTT_USER "CHANGEME"
+//#define MQTT_PASS "CHANGEME"
 
 // VITOTROL CONFIGURATION
 #define DEVICE_CLASS 0x11

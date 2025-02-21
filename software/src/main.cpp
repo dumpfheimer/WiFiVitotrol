@@ -40,7 +40,7 @@ int readInt = 0;
 byte readByte = 0;
 
 #if defined(ESP8266)
-SoftwareSerial softwareSerial = SoftwareSerial(6,7);
+SoftwareSerial softwareSerial = SoftwareSerial(MODBUS_RX, MODBUS_TX);
 #endif
 
 void serialLoop();
@@ -49,7 +49,7 @@ void setup() {
 #if defined(ESP8266)
     ModbusSerial.begin(1200, MODBUS_BAUD);
 #elif defined(ESP32)
-    ModbusSerial.begin(1200, MODBUS_BAUD, 17, 16, false);
+    ModbusSerial.begin(1200, MODBUS_BAUD, MODBUS_RX, MODBUS_TX, false);
     ModbusSerial.onReceive(serialLoop, false);
     ModbusSerial.setRxTimeout(1);
 #endif
