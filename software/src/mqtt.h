@@ -7,17 +7,15 @@
 
 #include "configuration.h"
 
-#ifdef MQTT_HOST
+#ifndef MQTT_HOST
+#include "wifi_mgr_portal.h"
+#endif
+
 
 #include <WiFiClient.h>
 #include <PubSubClient.h>
 
 #include "main.h"
-
-#endif //ifdef MQTT_HOST
-
-#define MQTT_TOPIC_BUFFER_SIZE 32
-#define MQTT_VALUE_BUFFER_SIZE 16
 
 void mqttSetup();
 void mqttLoop();

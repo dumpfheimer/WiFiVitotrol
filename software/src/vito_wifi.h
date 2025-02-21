@@ -10,6 +10,7 @@
 #include "writableData.h"
 #include "main.h"
 #include "dataset.h"
+#include "wifi_mgr.h"
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
@@ -20,15 +21,13 @@ extern ESP8266WebServer server;
 #endif
 
 #ifdef ESP32
-
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
-
 #endif
 
-void setupWifi();
 
+void setupWifi();
 void wifiLoop();
 
 #endif //SOFTWARE_WIFI_H

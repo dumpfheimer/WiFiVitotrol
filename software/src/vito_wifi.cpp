@@ -1,4 +1,4 @@
-#include "./vito_wifi.h"
+#include "vito_wifi.h"
 
 #ifdef ESP8266
 ESP8266WebServer server(80);
@@ -221,13 +221,14 @@ void wifiHandleReboot() {
 
 // ... setup wifi
 void setupWifi() {
-#if defined(ESP32)
-    WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
-    WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+#ifdef WIFI_SSID
+    setupWifi(WIFI_SSID, WIFI_PASSWORD, WIFI_HOST);
+    wifiMgrExpose(&server);
+#else
+    // eeprom config
+    wifiMgrExpose(&server);
+    wifiMgrPortalSetup(false);
 #endif
-    WiFi.begin(wifiSSID, wifiPassword);
-    WiFi.setAutoReconnect(true);
-    WiFi.hostname(wifiHost);
 
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
@@ -250,6 +251,7 @@ void setupWifi() {
     server.on("/getRequestDataset", wifiHandleGetRequestDataset);
 
     debugPrintln("Connecting to WiFi..");
+#ifdef WIFI_SSID
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
     }
@@ -257,6 +259,7 @@ void setupWifi() {
         debugPrintln("Error setting up MDNS responder!");
     }
     debugPrintln(WiFi.localIP());
+#endif
 
     ElegantOTA.begin(&server);
 

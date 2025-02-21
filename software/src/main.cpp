@@ -1,8 +1,10 @@
 #include "main.h"
 
+#ifdef WIFI_SSID
 const char *wifiSSID = WIFI_SSID;
 const char *wifiPassword = WIFI_PASSWORD;
 const char *wifiHost = WIFI_HOST;
+#endif
 const long rebootTimeout = REBOOT_TIMEOUT; // 15 minutes
 
 // the read buffer
@@ -37,6 +39,10 @@ uint8_t requestDataset = 0;
 int readInt = 0;
 byte readByte = 0;
 
+#if defined(ESP8266)
+SoftwareSerial softwareSerial = SoftwareSerial(6,7);
+#endif
+
 void serialLoop();
 
 void setup() {
@@ -61,9 +67,7 @@ void setup() {
     configureData();
 
     setupWifi();
-#ifdef MQTT_HOST
     mqttSetup();
-#endif
 }
 
 void serialLoop() {
@@ -184,9 +188,8 @@ void loop() {
 
     // call wifi loop (and ultimately handle wifi clients)
     wifiLoop();
-#ifdef MQTT_HOST
     mqttLoop();
-#endif
+
 #if defined(ESP8266)
     serialLoop();
 #endif
