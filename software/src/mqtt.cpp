@@ -3,8 +3,6 @@
 //
 #include "mqtt.h"
 
-#ifdef MQTT_HOST
-
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
@@ -63,11 +61,20 @@ void sendConnected() {
 }
 
 void mqttReconnect() {
+#ifndef MQTT_USER
+    const char* MQTT_USER = wifiMgrGetConfig("MQTT_USER");
+    if (MQTT_USER == nullptr) return;
+#endif
+#ifndef MQTT_PASS
+    const char* MQTT_PASS = wifiMgrGetConfig("MQTT_PASS");
+    if (MQTT_PASS == nullptr) return;
+#endif
     if (!client.connected()) {
 	    if (!WiFi.isConnected()) return;
         if (millis() - lastConnect > 5000) {
             debugPrintln("Reconnecting...");
-            if (!client.connect("VirtualVitotrol", MQTT_USER, MQTT_PASS, "virtualvitotrol/online", 1, true, "false")) {
+            const char* hostname = WiFi.getHostname();
+            if (!client.connect(hostname, MQTT_USER, MQTT_PASS, "virtualvitotrol/online", 1, true, "false")) {
                 debugPrint("failed, rc=");
                 debugPrint(client.state());
                 debugPrintln(" retrying in 5 seconds");
@@ -87,7 +94,7 @@ void mqttReconnect() {
 
 void mqttHandleMessage(char *topic, byte *payload, unsigned int length) {
     if (length > 31) return;
-    int i;
+    unsigned int i;
     for (i = 0; i < length; i++) mqttMessageBuffer[i] = (char) payload[i];
     mqttMessageBuffer[i] = '\0';
     if (strcmp(topic, "virtualvitotrol/currentRoomTemperature/set") == 0) {
@@ -104,8 +111,21 @@ void mqttHandleMessage(char *topic, byte *payload, unsigned int length) {
 }
 
 void mqttSetup() {
+#ifndef MQTT_HOST
+    const char* MQTT_HOST = wifiMgrGetConfig("MQTT_HOST");
+    if (MQTT_HOST != nullptr) {
+        client.setServer(MQTT_HOST, 1883);
+        client.setCallback(mqttHandleMessage);
+    }
+    wifiMgrPortalAddConfigEntry("MQTT Host", "MQTT_HOST", PortalConfigEntryType::STRING, false, true);
+    wifiMgrPortalAddConfigEntry("MQTT Username", "MQTT_USER", PortalConfigEntryType::STRING, false, true);
+    wifiMgrPortalAddConfigEntry("MQTT Password", "MQTT_PASS", PortalConfigEntryType::STRING, false, true);
+#else
     client.setServer(MQTT_HOST, 1883);
     client.setCallback(mqttHandleMessage);
+#endif
+    debugPrint("Configured MQTT_HOST ");
+    debugPrintln(MQTT_HOST);
 }
 
 void mqttLoop() {
@@ -128,8 +148,3 @@ void mqttLoop() {
         }
     }
 }
-
-#else
-void mqttSetup() {}
-void mqttLoop() {}
-#endif

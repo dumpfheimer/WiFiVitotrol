@@ -31,9 +31,11 @@
 // stick to 255 to prevent uint8 of overflowing
 #define BUFFER_LEN 255
 
+#ifdef WIFI_SSID
 extern const char *wifiSSID;
 extern const char *wifiPassword;
 extern const char *wifiHost;
+#endif
 extern const long rebootTimeout;
 
 extern byte buffer[BUFFER_LEN];
