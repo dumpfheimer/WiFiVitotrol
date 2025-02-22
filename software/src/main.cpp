@@ -1,10 +1,5 @@
 #include "main.h"
 
-#ifdef WIFI_SSID
-const char *wifiSSID = WIFI_SSID;
-const char *wifiPassword = WIFI_PASSWORD;
-const char *wifiHost = WIFI_HOST;
-#endif
 const long rebootTimeout = REBOOT_TIMEOUT; // 15 minutes
 
 // the read buffer
@@ -178,20 +173,24 @@ void serialLoop() {
 }
 
 void loop() {
-    // after timeout (1 hour) reboot.
-    if (((millis() - lastHeaterCommandReceivedAt > rebootTimeout) ||
-         (millis() - lastCommandReceivedAt) > rebootTimeout)) {
-        debugPrintln("REBOOT");
-        delay(1000);
-        ESP.restart();
-    }
+#ifndef WIFI_SSID
+    if (wifiMgrPortalLoop()) {
+#endif
+        // after timeout (1 hour) reboot.
+        if (((millis() - lastHeaterCommandReceivedAt > rebootTimeout) ||
+             (millis() - lastCommandReceivedAt) > rebootTimeout)) {
+            debugPrintln("REBOOT");
+            delay(1000);
+            ESP.restart();
+        }
 
-    // call wifi loop (and ultimately handle wifi clients)
-    wifiLoop();
-    mqttLoop();
-
+        mqttLoop();
+        wifiLoop();
 #if defined(ESP8266)
-    serialLoop();
+        serialLoop();
+#endif
+#ifndef WIFI_SSID
+    }
 #endif
 }
 

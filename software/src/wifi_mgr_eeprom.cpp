@@ -67,7 +67,7 @@ void wifiMgrSetupEEPROM() {
             newEntry->name[entryNameLength] = 0;
             newEntry->nameLen = entryNameLength;
             newEntry->value = new char[entryValueLength + 1];
-            newEntry->value[entryNameLength] = 0;
+            newEntry->value[entryValueLength] = 0;
             newEntry->valueLen = entryValueLength;
 
             for (int ri = 0; ri < entryNameLength && ri < 256; ri++) {

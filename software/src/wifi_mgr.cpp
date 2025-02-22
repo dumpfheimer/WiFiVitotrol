@@ -52,17 +52,17 @@ void connectToWifi() {
 
     wifiMgrScanCount++;
 
-    int n = WiFi.scanNetworks(true, false);
+    int n = WiFi.scanNetworks(true, false, 0);
 
     unsigned long waitForScanStart = millis();
 
-    while (WiFi.scanComplete() == -1 && (millis() - waitForScanStart) < wifiMgrWaitForScanMs) {
+    while (WiFi.scanComplete() < 0 && (millis() - waitForScanStart) < wifiMgrWaitForScanMs) {
         if (loopFunctionPointer != nullptr) loopFunctionPointer();
         delay(10);
     }
     n = WiFi.scanComplete();
 
-    if (n != -1) {
+    if (n > 0) {
         String ssid;
         uint8_t encryptionType;
         int32_t RSSI;
@@ -97,27 +97,24 @@ void connectToWifi() {
             if (!waitForWifi(wifiMgrWaitForConnectMs)) {
                 WiFi.disconnect(true);
                 WiFi.mode(WIFI_OFF);
-		wifiMgrUnsuccessfullTries += 1;
-		if (wifiMgrUnsuccessfullTries >= wifiMgrRebootAfterUnsuccessfullTries) {
-		    ESP.restart();
-		}
+		        wifiMgrUnsuccessfullTries += 1;
+		        if (wifiMgrUnsuccessfullTries >= wifiMgrRebootAfterUnsuccessfullTries) {
+		            ESP.restart();
+		        }
             } else {
-		wifiMgrUnsuccessfullTries = 0;
-#ifdef ESP8266
-		if (wifiMgrHN != nullptr) {
-
+		        wifiMgrUnsuccessfullTries = 0;
+		        if (wifiMgrHN != nullptr) {
 #if defined(ESP8266)
                     if (wifiMgrMdns.isRunning()) wifiMgrMdns.end();
                     wifiMgrMdns.begin(wifiMgrHN, WiFi.localIP());
 #elif defined(ESP32)
-		    mdns_init();
-		    mdns_hostname_set(wifiMgrHN);
+		            mdns_init();
+		            mdns_hostname_set(wifiMgrHN);
 #endif
-		}
-#endif
+		        }
                 wifiMgrLastNonShitRSS = millis();
             }
-	}
+	    }
     }
 }
 

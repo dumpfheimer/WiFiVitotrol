@@ -221,12 +221,11 @@ void wifiHandleReboot() {
 
 // ... setup wifi
 void setupWifi() {
+    wifiMgrExpose(&server);
 #ifdef WIFI_SSID
     setupWifi(WIFI_SSID, WIFI_PASSWORD, WIFI_HOST);
-    wifiMgrExpose(&server);
 #else
     // eeprom config
-    wifiMgrExpose(&server);
     wifiMgrPortalSetup(false, "WiFiVitotrol-", "p0rtal123");
 #endif
 
@@ -259,11 +258,11 @@ void setupWifi() {
         debugPrintln("Error setting up MDNS responder!");
     }
     debugPrintln(WiFi.localIP());
-#endif
 
     ElegantOTA.begin(&server);
 
     server.begin();
+#endif
 }
 
 void wifiLoop() {
