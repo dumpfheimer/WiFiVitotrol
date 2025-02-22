@@ -3,9 +3,17 @@
 #ifndef WIFI_MGR_EEPROM_H
 #define WIFI_MGR_EEPROM_H
 
+#if __has_include("my_config.h")
+#include "my_config.h"
+#endif
+
+#if __has_include("configuration.h")
+#include "configuration.h"
+#endif
+
 #include <EEPROM.h>
 
-void wifiMgrCommitEEPROM();
+bool wifiMgrCommitEEPROM();
 void wifiMgrClearEEPROM();
 const char* wifiMgrGetConfig(const char* name);
 bool wifiMgrSetConfig(const char* name, const char* value);

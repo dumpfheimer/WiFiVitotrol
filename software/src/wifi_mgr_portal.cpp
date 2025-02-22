@@ -5,9 +5,12 @@
 bool wifiMgrPortalIsSetup = false;
 bool wifiMgrPortalStarted = false;
 bool wifiMgrPortalConnectFailed = false;
+bool wifiMgrPortalCommitFailed = false;
 bool wifiMgrPortalRedirectIndex = false;
 bool wifiMgrPortalIsOwnServer = false;
 XWebServer *wifiMgrPortalWebServer = nullptr;
+const char *ssidPrefix = nullptr;
+const char *password = nullptr;
 
 PortalConfigEntry *firstEntry = nullptr;
 
@@ -25,7 +28,7 @@ void wifiMgrPortalSendConfigure() {
     bool isWifi = false;
     if (wifiMgrPortalWebServer->method() == HTTP_POST) {
         while (tmp != nullptr) {
-            if (wifiMgrPortalWebServer->hasArg(tmp->eepromKey)) {
+            if (wifiMgrPortalWebServer->hasArg(tmp->eepromKey) && !wifiMgrPortalWebServer->arg(tmp->eepromKey).isEmpty()) {
                 String val = wifiMgrPortalWebServer->arg(tmp->eepromKey);
                 const char *currentVal = wifiMgrGetConfig(tmp->eepromKey);
                 // config item is in post
@@ -35,52 +38,94 @@ void wifiMgrPortalSendConfigure() {
                         isWifi = true;
                     }
                     if (tmp->restartOnChange) needRestart = true;
-                    wifiMgrSetConfig(tmp->eepromKey, wifiMgrPortalWebServer->arg(tmp->eepromKey).c_str());
+                    if (tmp->type == STRING) {
+                        wifiMgrSetConfig(tmp->eepromKey, wifiMgrPortalWebServer->arg(tmp->eepromKey).c_str());
+                    } else if (tmp->type == NUMBER) {
+                        wifiMgrSetLongConfig(tmp->eepromKey, wifiMgrPortalWebServer->arg(tmp->eepromKey).toInt());
+                    } else if (tmp->type == BOOL) {
+                        wifiMgrSetBoolConfig(tmp->eepromKey, wifiMgrPortalWebServer->arg(tmp->eepromKey) == "1");
+                    }
                     changes++;
                 }
             }
             tmp = tmp->next;
         }
+        //wifiMgrPortalWebServer->sendHeader("Location", "/wifiMgr/configure");
+        //wifiMgrPortalWebServer->send(301);
     }
     String ret = "<html><body><form action=# method=POST>";
     tmp = firstEntry;
     while (tmp != nullptr) {
-        ret += "<h2>" + String(tmp->name) + "</h2><input type=\"text\" name=\"" + String(tmp->eepromKey) + "\"";
-        if (!tmp->isPassword) {
-            ret += " value=\"" + String(wifiMgrGetConfig(tmp->eepromKey)) + "\"";
+        ret += "<h2>" + String(tmp->name) + "</h2>";
+        if (tmp->type == STRING) {
+            ret += "<input type=\"text\" name=\"" + String(tmp->eepromKey) + "\"";
+            if (!tmp->isPassword) {
+                ret += " value=\"" + String(wifiMgrGetConfig(tmp->eepromKey)) + "\"";
+            }
+        } else if (tmp->type == NUMBER) {
+            ret += "<input type=\"number\" name=\"" + String(tmp->eepromKey) + "\"";
+            if (!tmp->isPassword) {
+                ret += " value=\"" + String(wifiMgrGetConfig(tmp->eepromKey)) + "\"";
+            }
+        } else if (tmp->type == BOOL) {
+            ret += "<select name=\"" + String(tmp->eepromKey) + "\">";
+            ret += "<option value=\"1\"";
+            if (wifiMgrGetBoolConfig(tmp->eepromKey, false)) ret += " selected";
+            ret += ">yes / on</option>";
+            ret += "<option value=\"0\"";
+            if (wifiMgrGetBoolConfig(tmp->eepromKey, true) == false) ret += " selected";
+            ret += ">no / off</option>";
+            ret += "</select>";
         }
-        ret += "><br/>";
+        ret += "<br/>";
         tmp = tmp->next;
     }
     ret +="<input type=submit></form>";
     if (changes > 0) ret += String(changes) + " changes made.";
     if (needRestart) ret += "will restart now.";
     if (wifiMgrPortalConnectFailed) ret += "last connect failed.";
-    ret += "</html>";
-    wifiMgrPortalWebServer->send(200, "text/html", ret);
 
-    if (isWifi) {
-        setupWifi(wifiMgrGetConfig("SSID"), wifiMgrGetConfig("WIFI_PW"));
-        if (WiFi.isConnected()) {
-            wifiMgrCommitEEPROM();
-            wifiMgrPortalConnectFailed = false;
+    if (wifiMgrPortalWebServer->method() == HTTP_POST) {
+        if (isWifi) {
+            ret += "Testing WiFi</body></html>";
+            wifiMgrPortalWebServer->send(200, "text/html", ret);
+            delay(500);
+            setupWifi(wifiMgrGetConfig("SSID"), wifiMgrGetConfig("WIFI_PW"));
+            if (WiFi.isConnected()) {
+                if (!wifiMgrCommitEEPROM()) {
+                    wifiMgrPortalCommitFailed = false;
+                }
+                wifiMgrPortalConnectFailed = false;
+            } else {
+                wifiMgrPortalIsSetup = false;
+                wifiMgrPortalStarted = false;
+                wifiMgrPortalConnectFailed = true;
+                wifiMgrPortalLoop();
+                return;
+            }
         } else {
-            wifiMgrPortalIsSetup = false;
-            wifiMgrPortalStarted = false;
-            wifiMgrPortalConnectFailed = true;
-            wifiMgrPortalLoop();
-            return;
+            if (!wifiMgrCommitEEPROM()) {
+                ret += "EEPROM write failed</body></html>";
+                wifiMgrPortalWebServer->send(200, "text/html", ret);
+                wifiMgrPortalCommitFailed = false;
+            } else {
+                ret += "settings saved</body></html>";
+                wifiMgrPortalWebServer->send(200, "text/html", ret);
+            }
+        }
+        if (needRestart) {
+            delay(1000);
+            ESP.restart();
         }
     } else {
-        wifiMgrCommitEEPROM();
-    }
-    if (needRestart) {
-        delay(1000);
-        ESP.restart();
+        ret += "</body></html>";
+        wifiMgrPortalWebServer->send(200, "text/html", ret);
     }
 }
 
-void wifiMgrPortalSetup(bool redirectIndex) {
+void wifiMgrPortalSetup(bool redirectIndex, const char* ssidPrefix_, const char* password_) {
+    ssidPrefix = ssidPrefix_;
+    password = password_;
     wifiMgrPortalRedirectIndex = redirectIndex;
     const char* ssid = wifiMgrGetConfig("SSID");
     wifiMgrPortalAddConfigEntry("SSID", "SSID", STRING, false, true);
@@ -96,7 +141,11 @@ void wifiMgrPortalSetup(bool redirectIndex) {
 #elifdef WIFI_MGR_HOSTNAME_PREFIX
             setupWifi(ssid, pw, WIFI_MGR_HOSTNAME_PREFIX + "-" + WiFi.macAddress());
 #else
-            setupWifi(ssid, pw);
+            String macAddress = WiFi.macAddress();
+            macAddress.replace(":", "");
+            macAddress = macAddress.substring(6, macAddress.length());
+
+            setupWifi(ssid, pw, (ssidPrefix + macAddress).c_str());
 #endif
         }
         else setupWifi(ssid, pw, host);
@@ -137,7 +186,8 @@ bool wifiMgrPortalLoop() {
     } else if (!wifiMgrPortalStarted) {
         String macAddress = WiFi.macAddress();
         macAddress.replace(":", "");
-        WiFi.softAP("Portal-" + macAddress, WIFI_MGR_PORTAL_PASSWORD);
+        macAddress = macAddress.substring(6, macAddress.length());
+        WiFi.softAP(ssidPrefix + macAddress, password);
 
         if (wifiMgrPortalWebServer != nullptr) wifiMgrPortalWebServer->begin();
 

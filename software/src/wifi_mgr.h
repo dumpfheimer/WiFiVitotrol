@@ -3,6 +3,14 @@
 #ifndef WIFI_MGR_H
 #define WIFI_MGR_H
 
+#if __has_include("my_config.h")
+#include "my_config.h"
+#endif
+
+#if __has_include("configuration.h")
+#include "configuration.h"
+#endif
+
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>

@@ -227,7 +227,7 @@ void setupWifi() {
 #else
     // eeprom config
     wifiMgrExpose(&server);
-    wifiMgrPortalSetup(false);
+    wifiMgrPortalSetup(false, "WiFiVitotrol-", "p0rtal123");
 #endif
 
     uint8_t p = 0;

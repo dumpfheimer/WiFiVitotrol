@@ -7,18 +7,7 @@
 // FOR EACH ENTRY:
 // LENGTH_OF_NAME LENGTH_OF VALUE NAME NAME NAME NAME VALUE VALUE VALUE
 
-#ifndef WIFI_MGR_MAX_CONFIG_ENTRIES
 #define WIFI_MGR_MAX_CONFIG_ENTRIES 32
-#endif
-
-#ifndef WIFI_MGR_EEPROM_START_ADDR
-#define WIFI_MGR_EEPROM_START_ADDR 0
-#endif
-
-
-#ifndef WIFI_MGR_EEPROM_SIZE
-#define WIFI_MGR_EEPROM_SIZE 1024
-#endif
 
 #define WIFI_MGR_EEPROM_HEADER_1 0x43
 #define WIFI_MGR_EEPROM_HEADER_2 0x96
@@ -44,7 +33,12 @@ CacheEntry* nextEmptyCacheEntry() {
 
 void wifiMgrSetupEEPROM() {
     if (initialized) return;
+#ifdef WIFI_MGR_EEPROM_SIZE
     EEPROM.begin(WIFI_MGR_EEPROM_SIZE);
+#else
+    EEPROM.begin(EEPROM.length());
+#endif
+
     //EEPROM.r
     uint8_t header1 = EEPROM.read(WIFI_MGR_EEPROM_START_ADDR + 0);
     uint8_t header2 = EEPROM.read(WIFI_MGR_EEPROM_START_ADDR + 1);
@@ -77,10 +71,10 @@ void wifiMgrSetupEEPROM() {
             newEntry->valueLen = entryValueLength;
 
             for (int ri = 0; ri < entryNameLength && ri < 256; ri++) {
-                newEntry->name[ri] = EEPROM.read(eepromPtr + 1 + ri);
+                newEntry->name[ri] = (char) EEPROM.read(eepromPtr + 1 + ri);
             }
             for (int ri = 0; ri < entryValueLength && ri < 256; ri++) {
-                newEntry->value[ri] = EEPROM.read(eepromPtr + 2 + entryNameLength + ri);
+                newEntry->value[ri] = (char) EEPROM.read(eepromPtr + 2 + entryNameLength + ri);
             }
         }
         eepromPtr += 2 + entryNameLength + entryValueLength;
@@ -96,7 +90,7 @@ CacheEntry* getCacheEntryByName(const char* name) {
     }
     return nullptr;
 }
-void wifiMgrCommitEEPROM() {
+bool wifiMgrCommitEEPROM() {
     wifiMgrSetupEEPROM();
     EEPROM.write(WIFI_MGR_EEPROM_START_ADDR + 0, WIFI_MGR_EEPROM_HEADER_1);
     EEPROM.write(WIFI_MGR_EEPROM_START_ADDR + 1, WIFI_MGR_EEPROM_HEADER_2);
@@ -118,8 +112,8 @@ void wifiMgrCommitEEPROM() {
             count++;
         }
     }
-    EEPROM.write(4, count);
-    EEPROM.commit();
+    EEPROM.write(WIFI_MGR_EEPROM_START_ADDR + 4, count);
+    return EEPROM.commit();
 }
 void wifiMgrClearEEPROM() {
     wifiMgrSetupEEPROM();
@@ -160,6 +154,30 @@ bool wifiMgrSetConfig(const char* name, const char* value) {
     cacheEntry->valueLen = len;
     return true;
 }
+bool wifiMgrSetConfig(const char* name, const char* value, uint8_t len) {
+    wifiMgrSetupEEPROM();
+    CacheEntry* cacheEntry = getCacheEntryByName(name);
+
+    if (cacheEntry == nullptr) {
+        cacheEntry = nextEmptyCacheEntry();
+        if (cacheEntry == nullptr) return false;
+
+        size_t nameLen = strlen(name);
+        cacheEntry->name = new char[nameLen + 1];
+        if (cacheEntry->name == nullptr) return false;
+        strcpy(cacheEntry->name, name);
+        cacheEntry->nameLen = nameLen;
+    }
+
+    if (cacheEntry->value != nullptr) delete[] cacheEntry->value;
+    cacheEntry->value = new char[len];
+    if (cacheEntry->value == nullptr) return false;
+    for (uint16_t wi = 0; wi < len; wi++) {
+        cacheEntry->value[wi] = (char) value[wi];
+    }
+    cacheEntry->valueLen = len;
+    return true;
+}
 long wifiMgrGetLongConfig(const char* name, long def) {
     long load;
     CacheEntry* cacheEntry = getCacheEntryByName(name);
@@ -179,7 +197,7 @@ bool wifiMgrSetLongConfig(const char* name, long val) {
     tmp[1] = val >> 16 & 0xFF;
     tmp[2] = val >> 8 & 0xFF;
     tmp[3] = val & 0xFF;
-    return wifiMgrSetConfig(name, tmp);
+    return wifiMgrSetConfig(name, tmp, 4);
 }
 unsigned long wifiMgrGetUlongConfig(const char* name, unsigned long def) {
     unsigned long load;
@@ -200,7 +218,7 @@ bool wifiMgrSetUlongConfig(const char* name, unsigned long val) {
     tmp[1] = val >> 16 & 0xFF;
     tmp[2] = val >> 8 & 0xFF;
     tmp[3] = val & 0xFF;
-    return wifiMgrSetConfig(name, tmp);
+    return wifiMgrSetConfig(name, tmp, 4);
 }
 bool wifiMgrGetBoolConfig(const char* name, bool def) {
     CacheEntry* cacheEntry = getCacheEntryByName(name);
@@ -209,8 +227,8 @@ bool wifiMgrGetBoolConfig(const char* name, bool def) {
     }
     return cacheEntry->value[0] != 0;
 }
-bool wifiMgrSetBoolConfig(const char* name, bool def) {
-    char tmp[] = {0};
-    if (def) tmp[0] = 1;
-    return wifiMgrSetConfig(name, tmp);
+bool wifiMgrSetBoolConfig(const char* name, bool val) {
+    char tmp[1] = {0};
+    if (val) tmp[0] = 1;
+    return wifiMgrSetConfig(name, tmp, 1);
 }

@@ -3,16 +3,13 @@
 #ifndef WIFI_MGR_PORTAL_H
 #define WIFI_MGR_PORTAL_H
 
-#ifndef WIFI_MGR_PORTAL_PASSWORD
-#define WIFI_MGR_PORTAL_PASSWORD "p0rtal123"
-#endif
-
 #include <wifi_mgr.h>
 #include <wifi_mgr_eeprom.h>
 
 enum PortalConfigEntryType {
     STRING = 0,
-    NUMBER = 1
+    NUMBER = 1,
+    BOOL = 2
 };
 struct PortalConfigEntry {
     PortalConfigEntryType type;
@@ -23,7 +20,7 @@ struct PortalConfigEntry {
     PortalConfigEntry* next;
 };
 
-void wifiMgrPortalSetup(bool redirectIndex);
+void wifiMgrPortalSetup(bool redirectIndex, const char* ssidPrefix, const char* password);
 bool wifiMgrPortalLoop();
 void wifiMgrPortalAddConfigEntry(const char* name, const char* eepromKey, PortalConfigEntryType type, bool isPassword, bool restartOnChange);
 

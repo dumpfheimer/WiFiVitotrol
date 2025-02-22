@@ -1,6 +1,8 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#define WIFI_MGR_EEPROM_START_ADDR 0
+#define WIFI_MGR_EEPROM_SIZE 1024
 // optional, can be configured over hotspot
 //#define WIFI_SSID "CHANGEME"
 //#define WIFI_PASSWORD "CHANGEME"
