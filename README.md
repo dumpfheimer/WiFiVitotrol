@@ -21,7 +21,7 @@ This project runs on ESP8266 and ESP32 and connnects to WiFi and Viessmann Heate
    $ pio device monitor
 
 6. Configure the device (if not done with configuration.h)
-   The device, if unconfigured, will open a Hotspot (Portal-XXXXXXXXXX)
+   The device, if unconfigured, will open a Hotspot (WiFiVitotrol-XXXXXXXXXX)
    Connect to the hotspot and navigate to http://192.168.4.1/wifiMgr/configure
    Enter SSID, Password, Hostname, MQTT Host Username and Password (optional)
    Click submit
