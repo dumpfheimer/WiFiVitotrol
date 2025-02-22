@@ -1,6 +1,6 @@
 #include "dataConfiguration.h"
 
-class WritableData *currentRoomTemperature = createWritableDataPoint("CurrentRoomTemperature", DATA_10_INT, 60000,
+class WritableData *currentRoomTemperature = createWritableDataPoint("CurrentRoomTemperature", DATA_10_INT, 30000,
                                                                      prepareSendCurrentRoomTemperature);
 
 class WritableData *desiredRoomTemperature = createWritableDataPoint("DesiredRoomTemperature", DATA_1_INT, 0,

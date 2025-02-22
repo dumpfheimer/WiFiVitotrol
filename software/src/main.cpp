@@ -67,6 +67,11 @@ void setup() {
 
 void serialLoop() {
     // only speak to heater when no datapoint is preventing it
+    if (preventCommunication()) {
+        while (ModbusSerial.available()) ModbusSerial.read();
+        debugPrintln("not talking to heater");
+    }
+
     if (millis() - lastReadAt > 100 && bufferPointer > 0) {
         // receiving took longer than 1s. dump!
         debugPrintln("\r\nTIMEOUT WHILE READING MESSAGE");
