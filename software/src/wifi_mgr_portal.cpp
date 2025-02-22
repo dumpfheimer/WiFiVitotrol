@@ -149,6 +149,8 @@ void wifiMgrPortalSetup(bool redirectIndex, const char* ssidPrefix_, const char*
 #endif
         }
         else setupWifi(ssid, pw, host);
+
+        if (wifiMgrPortalWebServer != nullptr) wifiMgrPortalWebServer->begin();
         wifiMgrPortalIsSetup = true;
     }
     wifiMgrPortalWebServer = wifiMgrGetWebServer();
@@ -156,7 +158,6 @@ void wifiMgrPortalSetup(bool redirectIndex, const char* ssidPrefix_, const char*
         wifiMgrPortalWebServer = new XWebServer(80);
         wifiMgrPortalIsOwnServer = true;
     }
-    wifiMgrPortalWebServer->begin();
     wifiMgrPortalWebServer->on("/wifiMgr/configure", HTTP_POST, wifiMgrPortalSendConfigure);
     wifiMgrPortalWebServer->on("/wifiMgr/configure", HTTP_GET, wifiMgrPortalSendConfigure);
     if (wifiMgrPortalRedirectIndex) {
@@ -182,6 +183,7 @@ void wifiMgrPortalAddConfigEntry(const char* name, const char* eepromKey, Portal
 bool wifiMgrPortalLoop() {
     if (wifiMgrPortalIsSetup) {
         loopWifi();
+        if (wifiMgrPortalWebServer != nullptr) wifiMgrPortalWebServer->handleClient();
         return true;
     } else if (!wifiMgrPortalStarted) {
         String macAddress = WiFi.macAddress();
