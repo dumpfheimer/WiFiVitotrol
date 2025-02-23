@@ -138,7 +138,7 @@ bool wifiMgrSetConfig(const char* name, const char* value) {
         size_t len = strlen(name);
         cacheEntry->name = new char[len + 1];
         if (cacheEntry->name == nullptr) return false;
-        strcpy(cacheEntry->name, name);
+        strncpy(cacheEntry->name, name, len);
         cacheEntry->nameLen = len;
     }
 
@@ -146,7 +146,7 @@ bool wifiMgrSetConfig(const char* name, const char* value) {
     size_t len = strlen(value);
     cacheEntry->value = new char[len + 1];
     if (cacheEntry->value == nullptr) return false;
-    strcpy(cacheEntry->value, value);
+    strncpy(cacheEntry->value, value, len);
     cacheEntry->valueLen = len;
     return true;
 }
@@ -161,7 +161,7 @@ bool wifiMgrSetConfig(const char* name, const char* value, uint8_t len) {
         size_t nameLen = strlen(name);
         cacheEntry->name = new char[nameLen + 1];
         if (cacheEntry->name == nullptr) return false;
-        strcpy(cacheEntry->name, name);
+        strncpy(cacheEntry->name, name, nameLen);
         cacheEntry->nameLen = nameLen;
     }
 

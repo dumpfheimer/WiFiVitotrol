@@ -9,16 +9,19 @@ PubSubClient client(wifiClient);
 unsigned long lastConnect = 0;
 unsigned long lastPing = 0;
 
-char mqttTopicBuffer[64];
-char mqttMessageBuffer[32];
+#define MQTT_TOPIC_BUFFER_LENGTH 64
+#define MQTT_MESSAGE_BUFFER_LENGTH 64
+
+char mqttTopicBuffer[MQTT_TOPIC_BUFFER_LENGTH];
+char mqttMessageBuffer[MQTT_MESSAGE_BUFFER_LENGTH];
 
 float lastCurrentRoomTemperature = -999;
 float lastDesiredRoomTemperature = -999;
 
 void sendPing() {
     if (client.connected()) {
-        strcpy(mqttTopicBuffer, "virtualvitotrol/online");
-        strcpy(mqttMessageBuffer, "true");
+        strncpy(mqttTopicBuffer, "virtualvitotrol/online", MQTT_TOPIC_BUFFER_LENGTH);
+        strncpy(mqttMessageBuffer, "true", MQTT_MESSAGE_BUFFER_LENGTH);
         client.publish(mqttTopicBuffer, mqttMessageBuffer, false);
         lastPing = millis();
     }
@@ -27,9 +30,9 @@ void sendPing() {
 void sendCurrentRoomTemperature() {
     if (client.connected()) {
         float f = currentRoomTemperature->getFloatValue();
-        if (snprintf(mqttMessageBuffer, 32, "%.1f", f)) {
+        if (snprintf(mqttMessageBuffer, MQTT_TOPIC_BUFFER_LENGTH, "%.1f", f)) {
             lastCurrentRoomTemperature = f;
-            strcpy(mqttTopicBuffer, "virtualvitotrol/currentRoomTemperature");
+            strncpy(mqttTopicBuffer, "virtualvitotrol/currentRoomTemperature", MQTT_TOPIC_BUFFER_LENGTH);
             client.publish(mqttTopicBuffer, mqttMessageBuffer, true);
         }
     }
@@ -38,9 +41,9 @@ void sendCurrentRoomTemperature() {
 void sendDesiredRoomTemperature() {
     if (client.connected()) {
         float f = desiredRoomTemperature->getFloatValue();
-        if (snprintf(mqttMessageBuffer, 32, "%.1f", f)) {
+        if (snprintf(mqttMessageBuffer, MQTT_TOPIC_BUFFER_LENGTH, "%.1f", f)) {
             lastDesiredRoomTemperature = f;
-            strcpy(mqttTopicBuffer, "virtualvitotrol/desiredRoomTemperature");
+            strncpy(mqttTopicBuffer, "virtualvitotrol/desiredRoomTemperature", MQTT_TOPIC_BUFFER_LENGTH);
             client.publish(mqttTopicBuffer, mqttMessageBuffer, true);
         }
     }
@@ -51,11 +54,11 @@ void sendConnected() {
         bool connected = (lastHeaterCommandReceivedAt > 0 && millis() - lastHeaterCommandReceivedAt < 60000);
 
         if (connected) {
-            strcpy(mqttMessageBuffer, "true");
+            strncpy(mqttMessageBuffer, "true", MQTT_MESSAGE_BUFFER_LENGTH);
         } else {
-            strcpy(mqttMessageBuffer, "false");
+            strncpy(mqttMessageBuffer, "false", MQTT_MESSAGE_BUFFER_LENGTH);
         }
-        strcpy(mqttTopicBuffer, "virtualvitotrol/connected");
+        strncpy(mqttTopicBuffer, "virtualvitotrol/connected", MQTT_TOPIC_BUFFER_LENGTH);
         client.publish(mqttTopicBuffer, mqttMessageBuffer, true);
     }
 }
