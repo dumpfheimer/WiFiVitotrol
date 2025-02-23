@@ -122,8 +122,8 @@ void mqttSetup() {
     wifiMgrPortalAddConfigEntry("MQTT Password", "MQTT_PASS", PortalConfigEntryType::STRING, false, true);
 #else
     client.setServer(MQTT_HOST, 1883);
-    client.setCallback(mqttHandleMessage);
 #endif
+    client.setCallback(mqttHandleMessage);
     debugPrint("Configured MQTT_HOST ");
     debugPrintln(MQTT_HOST);
 }
