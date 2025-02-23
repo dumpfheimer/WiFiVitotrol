@@ -13,8 +13,12 @@ This project runs on ESP8266 and ESP32 and connnects to WiFi and Viessmann Heate
    $ cd software
 
 4. Compile and Upload
-
-   $ pio run -t upload
+   a. ESP8266 (default Wemos d1 mini lite)
+   $ pio run -e ESP8266 -t upload
+   b. ESP32 (default Wemos d1 mini 32)
+   $ pio run -e ESP32 -t upload
+   other devices can be configured in platformio.ini
+   more information @ https://docs.platformio.org/en/latest/projectconf/index.html
 
 5. (optional) Check log output
 
