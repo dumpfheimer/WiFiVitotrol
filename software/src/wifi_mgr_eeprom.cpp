@@ -33,11 +33,7 @@ CacheEntry* nextEmptyCacheEntry() {
 
 void wifiMgrSetupEEPROM() {
     if (initialized) return;
-#ifdef WIFI_MGR_EEPROM_SIZE
     EEPROM.begin(WIFI_MGR_EEPROM_SIZE);
-#else
-    EEPROM.begin(EEPROM.length());
-#endif
 
     //EEPROM.r
     uint8_t header1 = EEPROM.read(WIFI_MGR_EEPROM_START_ADDR + 0);

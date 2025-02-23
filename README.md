@@ -3,7 +3,7 @@ ABOUT THIS PROJECT
 This project runs on ESP8266 and ESP32 and connnects to WiFi and Viessmann Heaters using KM BUS (https://github.com/openv/openv/wiki/KM-Bus) over TTL<->M-BUS adapter (https://www.aliexpress.com/item/32751482255.html?spm=a2g0o.productlist.0.0.43744c91mj7fO8&algo_pvid=92261257-59d5-45e2-b1d3-575c4333a3b1&algo_expid=92261257-59d5-45e2-b1d3-575c4333a3b1-0&btsid=0bb0622a16021520273081710ef490&ws_ab_test=searchweb0_0,searchweb201602_,searchweb201603_)
 
 
-# INSTALL INSTRUCTIONS
+# FIRMWARE INSTALL INSTRUCTIONS
 
 1. Check out this repository
 2. Download and install PlatformIO
@@ -30,10 +30,34 @@ This project runs on ESP8266 and ESP32 and connnects to WiFi and Viessmann Heate
 
     https://github.com/dumpfheimer/WiFiVitotrol/issues
 
+# PHYSICAL SETUP (WIP)
+I will not be responsible for any damage or other consequences
+
+DANGER OF LIFE
+Opening up your heater is DANGEROUS. Always COMPLETELY POWER OFF the device before opening up the heater.
+If you are not 110% sure you know what you're doing get help by a professional.
+
+1. Wire up the ESP to the TTL following the schema in WIRING
+2. Connect MB_A and MB_D to the Terminals 145 of you Heater (Double and Triple check that this is the right Terminal on your Heater too)
+3. Configure your Heater (Details will follow)
+
+
 # WIRING
 ## ESP8266
+WARNING: ESP8266 is not tested by me
+
+TTL <-> ESP
+---
+VIN <-> 3.3V
+GND <-> GND
+RXD <-> D4
+TXD <-> D5
 default config: D4 (RX), D5 (TX)
 
 ## ESP32
-# WARNING: ESP32 is not tested by me
-default config: 17 (RX), 16 (TX)
+TTL <-> ESP
+---
+VIN <-> 3.3V
+GND <-> GND
+RXD <-> 17
+TXD <-> 16
