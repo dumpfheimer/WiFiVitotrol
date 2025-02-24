@@ -49,6 +49,6 @@ extern SoftwareSerial softwareSerial;
 #define MODBUS_TX D5
 #define WIFI_MGR_EEPROM_SIZE 1024
 #endif
-#define DEBUG true
+#define DEBUG false
 
 #endif // CONFIGURATION_H

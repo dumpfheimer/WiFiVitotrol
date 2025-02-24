@@ -1,11 +1,6 @@
 #include "vito_wifi.h"
 
-#ifdef ESP8266
-ESP8266WebServer server(80);
-#endif
-#ifdef ESP32
-WebServer server(80);
-#endif
+XWebServer server(80);
 
 //
 //    THE HANDLERS
@@ -102,10 +97,15 @@ void wifiHandleGetOverview() {
         ret += "Heater is not connected\r\n";
     }
     if (preventCommunication()) {
-        ret += "Communication is prevented\r\n";
+        ret += "Communication is prevented2\r\n";
     } else {
-        ret += "Communication is not prevented\r\n";
+        ret += "Communication is not prevented2\r\n";
     }
+    ret += "\r\nLink state: " + String(linkState);
+    ret += "\r\nBuild date: ";
+    ret += __DATE__;
+    ret += " ";
+    ret += __TIME__;
     unsigned long m = millis();
     ret += "\r\nLast com: " + String(m - lastHeaterCommandReceivedAt) + "ms";
     ret += "\r\nLast read: " + String(m - lastReadAt) + "ms";
@@ -254,7 +254,7 @@ void setupWifi() {
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
     }
-    if (!MDNS.begin(wifiHost)) {
+    if (!MDNS.begin(WIFI_HOST)) {
         debugPrintln("Error setting up MDNS responder!");
     }
     debugPrintln(WiFi.localIP());
