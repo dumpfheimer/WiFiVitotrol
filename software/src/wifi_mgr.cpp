@@ -130,13 +130,11 @@ void setupWifi(const char* SSID, const char* password, const char* hostname, uns
     setupWifi(SSID, password, hostname, tolerateBadRSSms, waitForConnectMs, wifiMgrWaitForScanMs, wifiMgrRescanInterval);
 }
 
-#ifdef ElegantOTA_h
 void onOTAEnd(bool success) {
   if (success) {
     ESP.restart();
   }
 }
-#endif
 
 void setupWifi(const char* SSID, const char* password, const char* hostname, unsigned long tolerateBadRSSms, unsigned long waitForConnectMs, unsigned long waitForScanMs, unsigned long rescanInterval) {
     WiFi.mode(WIFI_STA);
@@ -162,11 +160,6 @@ void setupWifi(const char* SSID, const char* password, const char* hostname, uns
     wifiMgrRescanInterval = rescanInterval;
 
     connectToWifi();
-
-
-#ifdef ElegantOTA_h
-    ElegantOTA.onEnd(onOTAEnd);
-#endif
 }
 
 void loopWifi() {
@@ -232,6 +225,8 @@ void wifiMgrExpose(XWebServer *wifiMgrServer_) {
     wifiMgrServer->on("/wifiMgr/bssid", bssid);
     wifiMgrServer->on("/wifiMgr/status", status);
     wifiMgrServer->on("/wifiMgr/restart", restart);
+
+    ElegantOTA.begin(wifiMgrServer);
 }
 
 XWebServer* wifiMgrGetWebServer() {

@@ -30,13 +30,18 @@
 //        BUFFER CONFIGURATION
 // stick to 255 to prevent uint8 of overflowing
 #define BUFFER_LEN 255
+#define LINK_STATE_LENGTH 64
 
 #ifdef WIFI_SSID
-extern const char *wifiSSID;
-extern const char *wifiPassword;
-extern const char *wifiHost;
+#ifndef WIFI_PASSWORD
+#error "if WIFI_SSID is defined, WIFI_PASSWORD needs to be defined too"
+#endif
+#ifndef WIFI_HOST
+#error "if WIFI_SSID is defined, WIFI_HOST needs to be defined too"
+#endif
 #endif
 extern const long rebootTimeout;
+extern char* linkState;
 
 extern byte buffer[BUFFER_LEN];
 extern byte lastValidMessage[BUFFER_LEN];
@@ -54,7 +59,8 @@ extern byte readByte;
 extern uint8_t requestDataset;
 extern unsigned long lastBroadcastMessage;
 
-void serialLoopForever(void *pvParameters);
 void notifyCommandReceived();
+const char* getLinkState();
+void setLinkState(const char *newState);
 
 #endif //SOFTWARE_MAIN_H

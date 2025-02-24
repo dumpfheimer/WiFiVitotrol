@@ -15,7 +15,8 @@ bool workPing() {
     if (!prepareNextDataWrite()) {
         requestedDataResponseBuffer[0] = 0x80;
         prepareResponse(0x08, requestedDataResponseBuffer, 1);
-    }
+        snprintf(linkState, LINK_STATE_LENGTH, "sent dataset");
+    } else
     // https://github.com/boblegal31/Heater-remote/blob/1a857b10db96405937f65ed8338e314f57adaedf/NetRemote/example/inc/ViessMann.h
     /*
      * const unsigned char pongTelegram[] = {0x00, 0x11, 0x80, 0x08, 0x02, 0x01, 0x91, 0x76};
@@ -32,6 +33,9 @@ const unsigned char sendPartyModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 
         requestedDataResponseBuffer[0] = requestDataset;
         prepareResponse(0x3F, requestedDataResponseBuffer, 1);
         requestDataset = 0;
+    } else {
+        // send empty pong
+        prepareResponse(MSG_PONG, nullptr, 0);
     }
     return true;
 }
@@ -91,7 +95,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen) {
     if (cmd != MSG_MASTER_REQUESTING_REQUEST_N || msg[0] != 0xF8) {
         lastHeaterCommandReceivedAt = millis();
     }
-
+    setLinkState("working message");
     switch (cmd) {
         case MSG_PING:
             return workPing();
