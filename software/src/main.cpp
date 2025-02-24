@@ -41,6 +41,7 @@ char* linkState = new char[LINK_STATE_LENGTH + 1];
 SoftwareSerial softwareSerial = SoftwareSerial(MODBUS_RX, MODBUS_TX);
 #endif
 #if defined(FIND_DEVICE_ID)
+bool deviceIdSent = false;
 bool deviceIdFound = false;
 #endif
 
@@ -154,12 +155,20 @@ void serialLoop() {
                 }
 #ifdef FIND_DEVICE_ID
                 if (buffer[0] == DEVICE_CLASS && buffer[4] == DEVICE_SLOT) {
-                    if (buffer[2] != 0x00 && buffer[2] != 0x33) {
+                    if (buffer[2] == 0xB3 || buffer[2] == 0xBF) {
                         // device id seems to be good
                         deviceIdFound = true;
                     } else if (!deviceIdFound) {
-                        uint8_t *did = getRegisterPointer(0xF9);
-                        *did += 1;
+                        if (deviceIdSent) {
+                            uint8_t *did = getRegisterPointer(0xF9);
+                            *did += 1;
+                            deviceIdSent = false;
+                        } else {
+                            if (buffer[2] == 0x33) {
+                                // heater is requesting the ID
+                                deviceIdSent = true;
+                            }
+                        }
                     }
                 }
 #endif

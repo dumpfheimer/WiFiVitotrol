@@ -30,6 +30,7 @@ bool workPing() {
         requestedDataResponseBuffer[0] = requestDataset;
         prepareResponse(0x3F, requestedDataResponseBuffer, 1);
         snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDataset);
+        requestDataset = 0;
         return true;
     } else if (prepareNextDataWrite()) {
         strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
