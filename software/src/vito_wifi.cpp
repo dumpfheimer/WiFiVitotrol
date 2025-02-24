@@ -89,6 +89,10 @@ void wifiHandleGetSource() {
     server.send(200, "text/plain", "UNKNOWN");
 }
 
+void wifiHandleGetLinkState() {
+    server.send(200, "text/plain", linkState);
+}
+
 void wifiHandleGetOverview() {
     String ret = "";
     if (lastHeaterCommandReceivedAt > 0 && millis() - lastHeaterCommandReceivedAt < 60000) {
@@ -97,9 +101,9 @@ void wifiHandleGetOverview() {
         ret += "Heater is not connected\r\n";
     }
     if (preventCommunication()) {
-        ret += "Communication is prevented2\r\n";
+        ret += "Communication is prevented\r\n";
     } else {
-        ret += "Communication is not prevented2\r\n";
+        ret += "Communication is not prevented\r\n";
     }
     ret += "Link state: " + String(linkState);
     ret += "\r\nBuild date: ";
@@ -242,6 +246,7 @@ void setupWifi() {
     }
 
     server.on("/", wifiHandleGetOverview);
+    server.on("/linkState", wifiHandleGetLinkState);
     server.on("/get", wifiHandleGetData);
     server.on("/set", HTTP_POST, wifiHandleSetData);
     server.on("/isConnected", wifiHandleIsConnected);

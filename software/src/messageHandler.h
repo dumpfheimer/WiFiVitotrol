@@ -12,6 +12,6 @@
 #include "registers.h"
 #include "dataset.h"
 
-bool workMessageAndCreateResponseBuffer(byte buff[], uint8_t buffLen);
+bool workMessageAndCreateResponseBuffer(byte buff[]);
 
 #endif //SOFTWARE_MESSAGEHANDLER_H
