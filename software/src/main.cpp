@@ -65,7 +65,6 @@ void setup() {
 
     setupWifi();
     mqttSetup();
-    ElegantOTA.begin(&server);
 }
 
 unsigned long lastSerialLoop = 0;

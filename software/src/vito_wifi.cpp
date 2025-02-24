@@ -222,6 +222,7 @@ void wifiHandleReboot() {
 // ... setup wifi
 void setupWifi() {
     wifiMgrExpose(&server);
+    ElegantOTA.begin(&server);
 #ifdef WIFI_SSID
     setupWifi(WIFI_SSID, WIFI_PASSWORD, WIFI_HOST);
 #else
