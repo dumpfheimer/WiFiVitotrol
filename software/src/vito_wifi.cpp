@@ -49,7 +49,7 @@ void wifiHandleSetData() {
     bool forceWrite = false;
     for (int i = 0; i < server.args(); i++) {
         if (server.argName(i) == "val") {
-            strValue = server.arg(i).c_str();
+            strValue = server.arg(i);
             floatValue = strValue.toFloat();
             hasValue = true;
             break;
