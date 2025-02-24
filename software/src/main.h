@@ -16,6 +16,10 @@
 #include "SoftwareSerial.h"
 #endif
 
+#ifdef FIND_DEVICE_ID
+extern bool deviceIdFound;
+#endif
+
 #include "utils.h"
 #include "responseHelper.h"
 #include "dataConfiguration.h"
