@@ -34,6 +34,8 @@ uint8_t requestDataset = 0;
 int readInt = 0;
 byte readByte = 0;
 
+char* linkState = new char[LINK_STATE_LENGTH + 1];
+
 #if defined(ESP8266)
 SoftwareSerial softwareSerial = SoftwareSerial(MODBUS_RX, MODBUS_TX);
 #endif
@@ -41,11 +43,11 @@ SoftwareSerial softwareSerial = SoftwareSerial(MODBUS_RX, MODBUS_TX);
 void serialLoop();
 
 void setup() {
+    strncpy(linkState, "Setup", LINK_STATE_LENGTH);
 #if defined(ESP8266)
     ModbusSerial.begin(1200, MODBUS_BAUD);
 #elif defined(ESP32)
     ModbusSerial.begin(1200, MODBUS_BAUD, MODBUS_RX, MODBUS_TX, false);
-    ModbusSerial.onReceive(serialLoop, false);
     ModbusSerial.setRxTimeout(1);
 #endif
 
@@ -65,11 +67,26 @@ void setup() {
     mqttSetup();
 }
 
+unsigned long lastSerialLoop = 0;
+
 void serialLoop() {
+    if (!ModbusSerial.available() && (millis() - lastSerialLoop) < 1000) {
+        // only run serialLoop if there is new data or last run was 1 sec ago
+        return;
+    }
+    lastSerialLoop = millis();
     // only speak to heater when no datapoint is preventing it
     if (preventCommunication()) {
-        while (ModbusSerial.available()) ModbusSerial.read();
+        bool wasAvail = false;
+        while (ModbusSerial.available()) {
+            ModbusSerial.read();
+            wasAvail = true;
+        }
+        if (wasAvail) {
+            strncpy(linkState, "Did not respond to heater because datapoint prevented it", LINK_STATE_LENGTH);
+        }
         debugPrintln("not talking to heater");
+        return;
     }
 
     if (millis() - lastReadAt > 100 && bufferPointer > 0) {
@@ -146,6 +163,7 @@ void serialLoop() {
                         debugPrintln("");
 #endif
                     } else {
+                        strncpy(linkState,  "msg not successfully handled", LINK_STATE_LENGTH);
                         lastMessageWithoutResponseAt = millis();
 #if DEBUG == true
                         // debug print the unsuccessfully processed message
@@ -155,12 +173,14 @@ void serialLoop() {
 #endif
                     }
                 } else {
+                    snprintf(linkState, LINK_STATE_LENGTH, "received message for another device: %02X %02X", buffer[0], buffer[1]);
                     // a message was received, that is not addressed to us
                     // copy message to buffer of invalid message
                     memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
                 }
                 return;
             } else {
+                strncpy(linkState, "message with invalid CRC received", LINK_STATE_LENGTH);
 #if DEBUG == true
                 // invalid message
                 debugPrintln("invalid message received:");
@@ -191,14 +211,20 @@ void loop() {
 
         mqttLoop();
         wifiLoop();
-#if defined(ESP8266)
-        serialLoop();
-#endif
 #ifndef WIFI_SSID
     }
 #endif
+    serialLoop();
 }
 
 void notifyCommandReceived() {
     lastCommandReceivedAt = millis();
+}
+
+const char* getLinkState() {
+    linkState[LINK_STATE_LENGTH] = 0;
+    return linkState;
+}
+void setLinkState(const char *newState) {
+    strncpy(linkState, newState, LINK_STATE_LENGTH);
 }
