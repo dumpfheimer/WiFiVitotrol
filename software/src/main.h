@@ -57,6 +57,7 @@ extern unsigned long lastMessageWithResponseAt;
 extern unsigned long lastMessageWithoutResponseAt;
 extern byte readByte;
 extern uint8_t requestDataset;
+extern uint8_t requestByte;
 extern unsigned long lastBroadcastMessage;
 
 void notifyCommandReceived();

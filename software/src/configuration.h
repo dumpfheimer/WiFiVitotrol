@@ -1,6 +1,10 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#if __has_include("my_config.h")
+#include "my_config.h"
+#endif
+
 #define WIFI_MGR_EEPROM_START_ADDR 1
 // optional, can be configured over hotspot
 //#define WIFI_SSID "CHANGEME"
@@ -18,13 +22,23 @@
 //#define MQTT_PASS "CHANGEME"
 
 // VITOTROL CONFIGURATION
+#ifndef DEVICE_CLASS
 #define DEVICE_CLASS 0x11
+#endif
 
 // vitotrol 200
+#ifndef DEVICE_ID
 #define DEVICE_ID 0x34
+#endif
+#ifndef DEVICE_SN1
 #define DEVICE_SN1 0x00
+#endif
+#ifndef DEVICE_SN2
 #define DEVICE_SN2 0x05
+#endif
+#ifndef DEVICE_SLOT
 #define DEVICE_SLOT 0x01
+#endif
 
 // vitotrol 300
 //#define DEVICE_ID 0x38

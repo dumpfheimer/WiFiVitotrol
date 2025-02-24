@@ -31,6 +31,7 @@ unsigned long lastMessageWithoutResponseAt = 0;
 unsigned long lastResponseWrittenAt = 0;
 unsigned long lastBroadcastMessage = 0;
 uint8_t requestDataset = 0;
+uint8_t requestByte = 0;
 int readInt = 0;
 byte readByte = 0;
 
@@ -145,7 +146,7 @@ void serialLoop() {
                     // a valid message was received (CRC match)
                     // copy invalid message to buffer of invalid message
                     memcpy(lastValidMessage, buffer, BUFFER_LEN);
-                    if (workMessageAndCreateResponseBuffer(buffer, bufferPointer)) {
+                    if (workMessageAndCreateResponseBuffer(buffer)) {
                         // save time when a response is created for a message
                         lastMessageWithResponseAt = millis();
                         // message was processed successfully. send the response
@@ -164,6 +165,7 @@ void serialLoop() {
 #endif
                     } else {
                         strncpy(linkState,  "msg not successfully handled", LINK_STATE_LENGTH);
+                        memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
                         lastMessageWithoutResponseAt = millis();
 #if DEBUG == true
                         // debug print the unsuccessfully processed message
@@ -172,8 +174,8 @@ void serialLoop() {
                         debugPrintln("");
 #endif
                     }
-                } else {
-                    snprintf(linkState, LINK_STATE_LENGTH, "received message for another device: %02X %02X", buffer[0], buffer[1]);
+                } else if (buffer[0] != 0x00 && buffer[1] != 0x11) {
+                    snprintf(linkState, LINK_STATE_LENGTH, "received message for another device: %02X %02X %02X %02X", buffer[0], buffer[1], buffer[2], buffer[3]);
                     // a message was received, that is not addressed to us
                     // copy message to buffer of invalid message
                     memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
