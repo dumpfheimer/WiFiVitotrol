@@ -112,6 +112,9 @@ void connectToWifi() {
 		            mdns_hostname_set(wifiMgrHN);
 #endif
 		        }
+#if defined(ESP32)
+                if (wifiMgrServer != nullptr) wifiMgrServer->begin();
+#endif
                 wifiMgrLastNonShitRSS = millis();
             }
 	    }

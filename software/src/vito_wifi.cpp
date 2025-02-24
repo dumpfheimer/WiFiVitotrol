@@ -101,11 +101,12 @@ void wifiHandleGetOverview() {
     } else {
         ret += "Communication is not prevented2\r\n";
     }
-    ret += "\r\nLink state: " + String(linkState);
+    ret += "Link state: " + String(linkState);
     ret += "\r\nBuild date: ";
     ret += __DATE__;
     ret += " ";
     ret += __TIME__;
+    ret += "\r\n";
     unsigned long m = millis();
     ret += "\r\nLast com: " + String(m - lastHeaterCommandReceivedAt) + "ms";
     ret += "\r\nLast read: " + String(m - lastReadAt) + "ms";
@@ -259,9 +260,6 @@ void setupWifi() {
         debugPrintln("Error setting up MDNS responder!");
     }
     debugPrintln(WiFi.localIP());
-
-    ElegantOTA.begin(&server);
-
     server.begin();
 #endif
 }
