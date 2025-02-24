@@ -13,6 +13,8 @@
 //#define DEVICE_SLOT 0x01
 
 // if the DVICE_ID s 0x34 and 0x38 do not work, you can try all IDs by setting:
+// I would first disable the remote on the heater, then flash the firmware and then enable the remote again
+// this is a very slow process
 //#define FIND_DEVICE_ID
 //#define FIND_DEVICE_ID_START 0
 

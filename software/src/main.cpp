@@ -88,6 +88,7 @@ void serialLoop() {
     }
     lastSerialLoop = millis();
     // only speak to heater when no datapoint is preventing it
+#ifndef FIND_DEVICE_ID
     if (preventCommunication()) {
         bool wasAvail = false;
         while (ModbusSerial.available()) {
@@ -101,6 +102,7 @@ void serialLoop() {
         debugPrintln("not talking to heater");
         return;
     }
+#endif
 
     if (millis() - lastReadAt > 100 && bufferPointer > 0) {
         // receiving took longer than 1s. dump!
@@ -237,9 +239,14 @@ void loop() {
         // after timeout (1 hour) reboot.
         if (((millis() - lastHeaterCommandReceivedAt > rebootTimeout) ||
              (millis() - lastCommandReceivedAt) > rebootTimeout)) {
+
+#ifndef FIND_DEVICE_ID
             debugPrintln("REBOOT");
             delay(1000);
             ESP.restart();
+#else
+            debugPrintln("not rebooting because FIND_DEVICE_ID is set");
+#endif
         }
 
         mqttLoop();
