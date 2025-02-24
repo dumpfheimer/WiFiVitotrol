@@ -12,6 +12,10 @@
 //#define DEVICE_SN2 0x11
 //#define DEVICE_SLOT 0x01
 
+// if the DVICE_ID s 0x34 and 0x38 do not work, you can try all IDs by setting:
+//#define FIND_DEVICE_ID
+//#define FIND_DEVICE_ID_START 0
+
 // define wifi constants here, if portal is unwanted
 
 #endif //SOFTWARE_MY_CONFIG_H

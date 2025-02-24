@@ -40,6 +40,9 @@ char* linkState = new char[LINK_STATE_LENGTH + 1];
 #if defined(ESP8266)
 SoftwareSerial softwareSerial = SoftwareSerial(MODBUS_RX, MODBUS_TX);
 #endif
+#if defined(FIND_DEVICE_ID)
+bool deviceIdFound = false;
+#endif
 
 void serialLoop();
 
@@ -60,6 +63,13 @@ void setup() {
 
     clearBuff(true);
     initRegisters();
+#if defined(FIND_DEVICE_ID)
+#if defined(FIND_DEVICE_ID_START)
+    *getRegisterPointer(0xF9) = FIND_DEVICE_ID_START;
+#else
+    *getRegisterPointer(0xF8) = 0;
+#endif
+#endif
 
     clearResponseBuffer();
     configureData();
@@ -82,6 +92,7 @@ void serialLoop() {
         while (ModbusSerial.available()) {
             ModbusSerial.read();
             wasAvail = true;
+            lastReadAt = millis();
         }
         if (wasAvail) {
             strncpy(linkState, "Did not respond to heater because datapoint prevented it", LINK_STATE_LENGTH);
@@ -141,6 +152,17 @@ void serialLoop() {
                     // save time when last broadcast message was received
                     lastBroadcastMessage = millis();
                 }
+#ifdef FIND_DEVICE_ID
+                if (buffer[0] == DEVICE_CLASS && buffer[4] == DEVICE_SLOT) {
+                    if (buffer[2] != 0x00 && buffer[2] != 0x33) {
+                        // device id seems to be good
+                        deviceIdFound = true;
+                    } else if (!deviceIdFound) {
+                        uint8_t *did = getRegisterPointer(0xF9);
+                        *did += 1;
+                    }
+                }
+#endif
 
                 if ((buffer[0] == 0xFF) || (buffer[0] == DEVICE_CLASS && buffer[4] == DEVICE_SLOT)) {
                     // a valid message was received (CRC match)

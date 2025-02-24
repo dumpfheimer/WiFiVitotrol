@@ -105,6 +105,10 @@ void wifiHandleGetOverview() {
     } else {
         ret += "Communication is not prevented\r\n";
     }
+#ifdef FIND_DEVICE_ID
+    if (deviceIdFound) ret += "DeviceID found: 0x" + String(getRegisterValue(0xF9), HEX) + "\r\n";
+    else ret += "Scanning for DeviceID. Currently at 0x" + String(getRegisterValue(0xF9), HEX) + "\r\n";
+#endif
     ret += "Link state: " + String(linkState);
     ret += "\r\nBuild date: ";
     ret += __DATE__;
