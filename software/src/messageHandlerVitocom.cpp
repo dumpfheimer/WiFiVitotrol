@@ -1,4 +1,4 @@
-#include "messageHandler.h"
+#include "messageHandlerVitocom.h"
 
 #define MSG_PING 0x00
 #define MSG_MASTER_REQUESTING_REQUEST_1 0x31
@@ -10,7 +10,7 @@
 #define MST_MASTER_SENDING_DATA_N 0xB3
 #define MST_MASTER_SENDING_DATASET 0xBF
 
-byte requestedDataResponseBuffer[512] = {0};
+byte requestedDataResponseBufferVitocom[512] = {0};
 
 // https://github.com/boblegal31/Heater-remote/blob/1a857b10db96405937f65ed8338e314f57adaedf/NetRemote/example/inc/ViessMann.h
 /*
@@ -25,69 +25,69 @@ const unsigned char sendEcoModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x
 const unsigned char sendPartyModeOnTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x65, 0xBE, 0xAA, 0xAA, 0xAA, 0xAA, 0x0B, 0x5D};
 const unsigned char sendPartyModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x66, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x26, 0xC8};*/
 
-bool workPing() {
-    if (requestDataset > 0) {
-        requestedDataResponseBuffer[0] = requestDataset;
-        prepareResponse(0x3F, requestedDataResponseBuffer, 1, DEVICE_CLASS, DEVICE_SLOT);
-        snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDataset);
-        requestDataset = 0;
+bool workPingVitocom() {
+    if (requestDatasetVitocom > 0) {
+        requestedDataResponseBufferVitocom[0] = requestDatasetVitocom;
+        prepareResponse(0x3F, requestedDataResponseBufferVitocom, 1, VITOCOM_DEVICE_CLASS, VITOCOM_DEVICE_SLOT);
+        snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDatasetVitocom);
+        requestDatasetVitocom = 0;
         return true;
-    } else if (prepareNextDataWrite()) {
+    } /*else if (prepareNextDataWrite()) {
         strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
         return true;
-    } else {
+    } */else {
         // send empty pong
-        prepareResponse(MSG_PONG, nullptr, 0, DEVICE_CLASS, DEVICE_SLOT);
+        prepareResponse(MSG_PONG, nullptr, 0, VITOCOM_DEVICE_CLASS, VITOCOM_DEVICE_SLOT);
         strncpy(linkState, "sent pong", LINK_STATE_LENGTH);
         return true;
     }
 }
 
-bool workMasterRequestedN(uint8_t addr, uint8_t len) {
+bool workMasterRequestedNVitocom(uint8_t addr, uint8_t len) {
     for (int x = 0; x < len; x++) {
-        requestedDataResponseBuffer[2*x] = addr + x;
-        requestedDataResponseBuffer[2*x+1] = getRegisterValue(addr + x);
+        requestedDataResponseBufferVitocom[2*x] = addr + x;
+        requestedDataResponseBufferVitocom[2*x+1] = getRegisterValueVitocom(addr + x);
     }
-    prepareResponse(0xB3, requestedDataResponseBuffer, len * 2, DEVICE_CLASS, DEVICE_SLOT);
+    prepareResponse(0xB3, requestedDataResponseBufferVitocom, len * 2, VITOCOM_DEVICE_CLASS, VITOCOM_DEVICE_SLOT);
     snprintf(linkState, LINK_STATE_LENGTH, "master requested %d bytes from %02X", len, addr);
     return true;
 }
 
-bool workMasterRequested1(uint8_t addr) {
-    requestedDataResponseBuffer[0] = addr;
-    requestedDataResponseBuffer[1] = getRegisterValue(addr);
+bool workMasterRequested1Vitocom(uint8_t addr) {
+    requestedDataResponseBufferVitocom[0] = addr;
+    requestedDataResponseBufferVitocom[1] = getRegisterValueVitocom(addr);
 
-    prepareResponse(0xB1, requestedDataResponseBuffer, 2, DEVICE_CLASS, DEVICE_SLOT);
+    prepareResponse(0xB1, requestedDataResponseBufferVitocom, 2, VITOCOM_DEVICE_CLASS, VITOCOM_DEVICE_SLOT);
     snprintf(linkState, LINK_STATE_LENGTH, "master requested byte at address %02X", addr);
     return true;
 }
 
-bool workMasterSentDataset(byte message[], uint8_t messageLength) {
+bool workMasterSentDatasetVitocom(byte message[], uint8_t messageLength) {
     //0-11-bf-c-1-1-20-63-aa-aa-e1-a6-
     for (int i = 1; i < messageLength; i++) message[i] = message[i] ^ 0xAA;
-    setDataset(message[0], &message[1], messageLength - 1);
+    setDatasetVitocom(message[0], &message[1], messageLength - 1);
 
     snprintf(linkState, LINK_STATE_LENGTH, "master sent %d bytes to dataset %02X", messageLength - 1, message[0]);
     return true;
 }
 
-bool workMasterSent1(uint8_t addr, uint8_t value) {
-    setRegister(addr, 1, &value);
+bool workMasterSent1Vitocom(uint8_t addr, uint8_t value) {
+    setRegisterVitocom(addr, 1, &value);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent byte to address %02X", addr);
     return true;
 }
 
-bool workMasterSentN(byte buffer[]) {
+bool workMasterSentNVitocom(byte buffer[]) {
     int regCount = buffer[0];
     for (int x = 0; x < regCount; x++) {
-        setRegister(buffer[1+2*x], 1, &buffer[2+2*x]);
+        setRegisterVitocom(buffer[1+2*x], 1, &buffer[2+2*x]);
     }
     snprintf(linkState, LINK_STATE_LENGTH, "master sent %d bytes", regCount);
     return true;
 }
 
 // will return whether the message could be processed
-bool workMessageAndCreateResponseBuffer(byte buff[]) {
+bool workMessageAndCreateResponseBufferVitocom(byte buff[]) {
     uint8_t destinationClass = buff[0];
     uint8_t sourceClass = buff[1];
     uint8_t cmd = buff[2];
@@ -95,7 +95,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
     uint8_t dsl = buff[4];
     uint8_t ssk = buff[5];
 
-    if (destinationClass != DEVICE_CLASS && destinationClass != 0xFF) return false;
+    if (destinationClass != VITOCOM_DEVICE_CLASS && destinationClass != 0xFF) return false;
     if (sourceClass != 0x00) return false;
 
     byte *msg = &buff[6];
@@ -107,18 +107,18 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
     snprintf(linkState, LINK_STATE_LENGTH, "working message %02X", cmd);
     switch (cmd) {
         case MSG_PING:
-            return workPing();
+            return workPingVitocom();
         case MSG_MASTER_REQUESTING_REQUEST_1:
-            return workMasterRequested1(buff[6]);
+            return workMasterRequested1Vitocom(buff[6]);
         case MSG_MASTER_REQUESTING_REQUEST_N:
-            return workMasterRequestedN(msg[0], msg[1]);
+            return workMasterRequestedNVitocom(msg[0], msg[1]);
         case MST_MASTER_SENDING_DATA_1:
-            return workMasterSent1(msg[0], msg[1]);
+            return workMasterSent1Vitocom(msg[0], msg[1]);
         case MST_MASTER_SENDING_DATA_N:
-            return workMasterSentN(msg);
+            return workMasterSentNVitocom(msg);
         case MST_MASTER_SENDING_DATASET:
             //return false;
-            return workMasterSentDataset(msg, msgLen);
+            return workMasterSentDatasetVitocom(msg, msgLen);
         default:
 #if DEBUG == true
             debugPrintln("not sure how to handle message:");

@@ -109,6 +109,10 @@ void wifiHandleGetOverview() {
     if (deviceIdFound) ret += "DeviceID found: 0x" + String(getRegisterValue(0xF9), HEX) + "\r\n";
     else ret += "Scanning for DeviceID. Currently at 0x" + String(getRegisterValue(0xF9), HEX) + "\r\n";
 #endif
+#ifdef VITOCOM_FIND_DEVICE_ID
+    if (deviceIdFound) ret += "Vitocom DeviceID found: 0x" + String(getRegisterValueVitocom(0xF9), HEX) + "\r\n";
+    else ret += "Scanning for Vitocom DeviceID. Currently at 0x" + String(getRegisterValueVitocom(0xF9), HEX) + "\r\n";
+#endif
     ret += "Link state: " + String(linkState);
     ret += "\r\nBuild date: ";
     ret += __DATE__;
@@ -172,17 +176,17 @@ void wifiHandleGetOverview() {
 
 void wifiHandleReadDatasets() {
     String ret = "{";
-        for(int i = 0; i < DATASETS; i++) {
-            Dataset *d = getDataset(i);
-            if (d != nullptr) {
-                ret += String(i) + ": [";
-                for (int i2 = 0; i2 < d->len; i2++) {
-                    ret += String(d->data[i2]);
-                    if (i2+1 < d->len) ret += ",";
-                }
-                ret += "]";
+    for(int i = 0; i < DATASETS; i++) {
+        Dataset *d = getDataset(i);
+        if (d != nullptr) {
+            ret += String(i) + ": [";
+            for (int i2 = 0; i2 < d->len; i2++) {
+                ret += String(d->data[i2]);
+                if (i2+1 < d->len) ret += ",";
             }
+            ret += "]";
         }
+    }
     ret += "}";
     server.send(200, "application/json", ret);
 }
@@ -196,6 +200,35 @@ void wifiHandleReadRegisters() {
     ret += "]";
     server.send(200, "application/json", ret);
 }
+#ifdef VITOCOM
+
+void wifiHandleReadDatasetsVitocom() {
+    String ret = "{";
+    for(int i = 0; i < DATASETS; i++) {
+        Dataset *d = getDatasetVitocom(i);
+        if (d != nullptr) {
+            ret += String(i) + ": [";
+            for (int i2 = 0; i2 < d->len; i2++) {
+                ret += String(d->data[i2]);
+                if (i2+1 < d->len) ret += ",";
+            }
+            ret += "]";
+        }
+    }
+    ret += "}";
+    server.send(200, "application/json", ret);
+}
+
+void wifiHandleReadRegistersVitocom() {
+    String ret = "[";
+    for (int i = 0; i <= 255; i++) {
+        ret += String((uint8_t) getRegisterValueVitocom(i));
+        if (i < 255) ret += ",";
+    }
+    ret += "]";
+    server.send(200, "application/json", ret);
+}
+#endif
 
 void wifiHandleIsPreventCommunication() {
     if (preventCommunication()) {
@@ -217,6 +250,12 @@ void wifiHandleRequestDataset() {
     if (server.hasArg("id")) requestDataset = server.arg("id").toInt();
     server.send(200, "text/plain", String(requestDataset));
 }
+#ifdef VITOCOM
+void wifiHandleRequestDatasetVitocom() {
+    if (server.hasArg("id")) requestDatasetVitocom = server.arg("id").toInt();
+    server.send(200, "text/plain", String(requestDatasetVitocom));
+}
+#endif
 
 void wifiHandleGetRequestDataset() {
     server.send(200, "text/plain", String(requestDataset));
@@ -259,6 +298,11 @@ void setupWifi() {
     server.on("/datasets", wifiHandleReadDatasets);
     server.on("/requestDataset", wifiHandleRequestDataset);
     server.on("/getRequestDataset", wifiHandleGetRequestDataset);
+#ifdef VITOCOM
+    server.on("/datasetsVitocom",wifiHandleReadDatasetsVitocom);
+    server.on("/registersVitocom", wifiHandleReadRegistersVitocom);
+    server.on("/requestDatasetVitocom", wifiHandleRequestDatasetVitocom);
+#endif
 
     debugPrintln("Connecting to WiFi..");
 #ifdef WIFI_SSID

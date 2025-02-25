@@ -15,13 +15,13 @@ void addCRCToBuffer(uint8_t bufferLength) {
     responseBuffer[bufferLength + 1] = b2;
 }
 
-void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen) {
+void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen, uint8_t deviceClass, uint8_t deviceSlot) {
     clearResponseBuffer();
     responseBuffer[0] = 0x00; // dest class
-    responseBuffer[1] = DEVICE_CLASS; // source class
+    responseBuffer[1] = deviceClass; // source class
     responseBuffer[2] = cmd;  // cmd
     responseBuffer[3] = 8 + msgLen;  // length
-    responseBuffer[4] = DEVICE_SLOT;
+    responseBuffer[4] = deviceSlot;
     responseBuffer[5] = 0x01;
 
     // copy msg to responseBuffer

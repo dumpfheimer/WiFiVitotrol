@@ -13,7 +13,7 @@ void prepareSendCurrentRoomTemperature() {
         ret[2] = 0x00 ^ 0xAA;
     }
     ret[3] = 0x00 ^ 0xAA;
-    prepareResponse(0xBF, ret, 4);
+    prepareResponse(0xBF, ret, 4, DEVICE_CLASS, DEVICE_SLOT);
 }
 
 // the desired room temperature
@@ -26,5 +26,5 @@ void prepareSendDesiredRoomTemperature() {
     ret[3] = 0xCD ^ 0xAA; // 67 CD=normal room temperature CE=reduced room temperature
     ret[4] = desiredRoomTemperature->getSendValue() ^ 0xAA; // the temperature
     ret[5] = 0x00 ^ 0xAA;
-    prepareResponse(0xBF, ret, 6);
+    prepareResponse(0xBF, ret, 6, DEVICE_CLASS, DEVICE_SLOT);
 }

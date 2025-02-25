@@ -11,6 +11,9 @@
 #include "main.h"
 #include "dataset.h"
 #include "wifi_mgr.h"
+#ifdef VITOCOM
+#include "datasetVitocom.h"
+#endif
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>

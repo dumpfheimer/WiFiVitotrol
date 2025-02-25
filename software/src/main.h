@@ -19,12 +19,18 @@
 #ifdef FIND_DEVICE_ID
 extern bool deviceIdFound;
 #endif
+#ifdef VITOCOM_FIND_DEVICE_ID
+extern bool deviceIdFound;
+#endif
 
 #include "utils.h"
 #include "responseHelper.h"
 #include "dataConfiguration.h"
 #include "vito_wifi.h"
 #include "messageHandler.h"
+#ifdef VITOCOM
+#include "messageHandlerVitocom.h"
+#endif
 #include "crc.h"
 #include "writableData.h"
 #include "utils.h"
@@ -61,6 +67,9 @@ extern unsigned long lastMessageWithResponseAt;
 extern unsigned long lastMessageWithoutResponseAt;
 extern byte readByte;
 extern uint8_t requestDataset;
+#ifdef VITOCOM
+extern uint8_t requestDatasetVitocom;
+#endif
 extern uint8_t requestByte;
 extern unsigned long lastBroadcastMessage;
 

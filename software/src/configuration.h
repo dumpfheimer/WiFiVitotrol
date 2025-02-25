@@ -65,4 +65,10 @@ extern SoftwareSerial softwareSerial;
 #endif
 #define DEBUG false
 
+#ifdef FIND_DEVICE_ID
+#ifdef VITOCOM_FIND_DEVICE_ID
+#error "can not find device id for vitotrol and vitocom at the same time"
+#endif
+#endif
+
 #endif // CONFIGURATION_H

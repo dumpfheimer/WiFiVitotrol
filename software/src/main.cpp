@@ -31,7 +31,9 @@ unsigned long lastMessageWithoutResponseAt = 0;
 unsigned long lastResponseWrittenAt = 0;
 unsigned long lastBroadcastMessage = 0;
 uint8_t requestDataset = 0;
-uint8_t requestByte = 0;
+#ifdef VITOCOM
+uint8_t requestDatasetVitocom = 0;
+#endif
 int readInt = 0;
 byte readByte = 0;
 
@@ -40,7 +42,7 @@ char* linkState = new char[LINK_STATE_LENGTH + 1];
 #if defined(ESP8266)
 SoftwareSerial softwareSerial = SoftwareSerial(MODBUS_RX, MODBUS_TX);
 #endif
-#if defined(FIND_DEVICE_ID)
+#if defined(FIND_DEVICE_ID) || defined(VITOCOM_FIND_DEVICE_ID)
 bool deviceIdSent = false;
 bool deviceIdFound = false;
 #endif
@@ -64,11 +66,16 @@ void setup() {
 
     clearBuff(true);
     initRegisters();
-#if defined(FIND_DEVICE_ID)
+#if defined(FIND_DEVICE_ID) || defined(VITOCOM_FIND_DEVICE_ID)
 #if defined(FIND_DEVICE_ID_START)
     *getRegisterPointer(0xF9) = FIND_DEVICE_ID_START;
 #else
     *getRegisterPointer(0xF8) = 0;
+#endif
+#if defined(VITICOM_FIND_DEVICE_ID_START)
+    *getRegisterPointerVitocom(0xF9) = VITICOM_FIND_DEVICE_ID_START;
+#else
+    *getRegisterPointerVitocom(0xF8) = 0;
 #endif
 #endif
 
@@ -174,6 +181,25 @@ void serialLoop() {
                     }
                 }
 #endif
+#ifdef VITOCOM_FIND_DEVICE_ID
+                if (buffer[0] == VITOCOM_DEVICE_CLASS && buffer[4] == VITOCOM_DEVICE_SLOT) {
+                    if (buffer[2] == 0xB3 || buffer[2] == 0xBF) {
+                        // device id seems to be good
+                        deviceIdFound = true;
+                    } else if (!deviceIdFound) {
+                        if (deviceIdSent) {
+                            uint8_t *did = getRegisterPointerVitocom(0xF9);
+                            *did += 1;
+                            deviceIdSent = false;
+                        } else {
+                            if (buffer[2] == 0x33) {
+                                // heater is requesting the ID
+                                deviceIdSent = true;
+                            }
+                        }
+                    }
+                }
+#endif
 
                 if ((buffer[0] == 0xFF) || (buffer[0] == DEVICE_CLASS && buffer[4] == DEVICE_SLOT)) {
                     // a valid message was received (CRC match)
@@ -207,7 +233,43 @@ void serialLoop() {
                         debugPrintln("");
 #endif
                     }
-                } else if (buffer[0] != 0x00 && buffer[1] != 0x11) {
+                }
+#ifdef VITOCOM
+                else if (buffer[0] == 0x20 && buffer[1] == 0x00) {
+                    // a valid message was received (CRC match)
+                    // copy invalid message to buffer of invalid message
+                    memcpy(lastValidMessage, buffer, BUFFER_LEN);
+                    if (workMessageAndCreateResponseBufferVitocom(buffer)) {
+                        // save time when a response is created for a message
+                        lastMessageWithResponseAt = millis();
+                        // message was processed successfully. send the response
+                        sendResponse();
+                        lastResponseWrittenAt = millis();
+
+#if DEBUG == true
+                        // debug print the request/response
+                        debugPrint("OK: ");
+                        // debug print the received message
+                        printAsHex(&DebugSerial, buffer, bufferPointer);
+                        debugPrint("->");
+                        // debug print the response message
+                        printAsHex(&DebugSerial, responseBuffer, responseBuffer[3]);
+                        debugPrintln("");
+#endif
+                    } else {
+                        strncpy(linkState,  "msg not successfully handled", LINK_STATE_LENGTH);
+                        memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
+                        lastMessageWithoutResponseAt = millis();
+#if DEBUG == true
+                        // debug print the unsuccessfully processed message
+                        debugPrint("NOK: ");
+                        printAsHex(&DebugSerial, buffer, bufferPointer);
+                        debugPrintln("");
+#endif
+                    }
+                }
+#endif
+                else if (buffer[0] != 0x00 && buffer[1] != 0x11) {
                     snprintf(linkState, LINK_STATE_LENGTH, "received message for another device: %02X %02X %02X %02X", buffer[0], buffer[1], buffer[2], buffer[3]);
                     // a message was received, that is not addressed to us
                     // copy message to buffer of invalid message
