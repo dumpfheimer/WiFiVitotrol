@@ -1,3 +1,4 @@
+#ifdef VITOCOM
 #include "messageHandlerVitocom.h"
 
 #define MSG_PING 0x00
@@ -128,3 +129,4 @@ bool workMessageAndCreateResponseBufferVitocom(byte buff[]) {
             return false;
     }
 }
+#endif
