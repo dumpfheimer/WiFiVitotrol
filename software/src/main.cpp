@@ -68,7 +68,7 @@ void setup() {
 #if defined(FIND_DEVICE_ID_START)
     *getRegisterPointer(0xF9) = FIND_DEVICE_ID_START;
 #else
-    *getRegisterPointer(0xF8) = 0;
+    *getRegisterPointer(0xF9) = 0;
 #endif
 #endif
 
@@ -157,7 +157,7 @@ void serialLoop() {
                 }
 #ifdef FIND_DEVICE_ID
                 if (buffer[0] == DEVICE_CLASS && buffer[4] == DEVICE_SLOT) {
-                    if (buffer[2] == 0xB3 || buffer[2] == 0xBF) {
+                    if (buffer[2] == 0xB3 || buffer[2] == 0xBF || (buffer[2] == 0x33 && buffer[5] != 0xF8)) {
                         // device id seems to be good
                         deviceIdFound = true;
                     } else if (!deviceIdFound) {
@@ -166,7 +166,7 @@ void serialLoop() {
                             *did += 1;
                             deviceIdSent = false;
                         } else {
-                            if (buffer[2] == 0x33) {
+                            if (buffer[2] == 0x33 && buffer[5] == 0xF8) {
                                 // heater is requesting the ID
                                 deviceIdSent = true;
                             }
