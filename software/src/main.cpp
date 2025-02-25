@@ -235,7 +235,7 @@ void serialLoop() {
                     }
                 }
 #ifdef VITOCOM
-                else if (buffer[0] == 0x20 && buffer[1] == 0x00) {
+                else if (buffer[0] == VITOCOM_DEVICE_CLASS && buffer[4] == VITOCOM_DEVICE_SLOT) {
                     // a valid message was received (CRC match)
                     // copy invalid message to buffer of invalid message
                     memcpy(lastValidMessage, buffer, BUFFER_LEN);
@@ -257,7 +257,7 @@ void serialLoop() {
                         debugPrintln("");
 #endif
                     } else {
-                        strncpy(linkState,  "msg not successfully handled", LINK_STATE_LENGTH);
+                        strncpy(linkState,  "Vitocom msg not successfully handled", LINK_STATE_LENGTH);
                         memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
                         lastMessageWithoutResponseAt = millis();
 #if DEBUG == true

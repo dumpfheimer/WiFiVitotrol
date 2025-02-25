@@ -1,5 +1,5 @@
-#ifdef VITOCOM
 #include "messageHandlerVitocom.h"
+#ifdef VITOCOM
 
 #define MSG_PING 0x00
 #define MSG_MASTER_REQUESTING_REQUEST_1 0x31
