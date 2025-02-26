@@ -26,14 +26,14 @@ const unsigned char sendPartyModeOnTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0
 const unsigned char sendPartyModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x66, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x26, 0xC8};*/
 
 bool workPing() {
-    if (requestDataset > 0) {
+    if (prepareNextDataWrite()) {
+        strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
+        return true;
+    } else if (requestDataset > 0) {
         requestedDataResponseBuffer[0] = requestDataset;
         prepareResponse(0x3F, requestedDataResponseBuffer, 1);
         snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDataset);
         requestDataset = 0;
-        return true;
-    } else if (prepareNextDataWrite()) {
-        strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
         return true;
     } else {
         // send empty pong
@@ -67,12 +67,14 @@ bool workMasterSentDataset(byte message[], uint8_t messageLength) {
     for (int i = 1; i < messageLength; i++) message[i] = message[i] ^ 0xAA;
     setDataset(message[0], &message[1], messageLength - 1);
 
+    prepareResponse(MSG_PONG, nullptr, 0);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent %d bytes to dataset %02X", messageLength - 1, message[0]);
     return true;
 }
 
 bool workMasterSent1(uint8_t addr, uint8_t value) {
     setRegister(addr, 1, &value);
+    prepareResponse(MSG_PONG, nullptr, 0);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent byte to address %02X", addr);
     return true;
 }
@@ -82,6 +84,7 @@ bool workMasterSentN(byte buffer[]) {
     for (int x = 0; x < regCount; x++) {
         setRegister(buffer[1+2*x], 1, &buffer[2+2*x]);
     }
+    prepareResponse(MSG_PONG, nullptr, 0);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent %d bytes", regCount);
     return true;
 }
@@ -117,6 +120,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
         case MST_MASTER_SENDING_DATA_N:
             return workMasterSentN(msg);
         case MST_MASTER_SENDING_DATASET:
+        case MSG_MASTER_REQUESTING_REQUEST_DATASET:
             //return false;
             return workMasterSentDataset(msg, msgLen);
         default:

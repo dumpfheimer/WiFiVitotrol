@@ -35,6 +35,15 @@ void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen) {
 
 void sendResponse() {
     uint8_t startAtIndex = 0;
+    if ((millis() -lastMessageAt) < 20) delay(millis() -lastMessageAt);
+
+    if (isValidCRC(responseBuffer, responseBuffer[3])) {
+        pushLastMessage('w', responseBuffer, responseBuffer[3]);
+    } else {
+        uint8_t len = responseBuffer[3] - 2;
+        addCRCToBuffer(len);
+        pushLastMessage('W', responseBuffer, responseBuffer[3]);
+    }
 
     for (uint8_t i = startAtIndex; i < responseBuffer[3] && i < BUFFER_LEN; i++) {
         while (!ModbusSerial.availableForWrite()) yield();

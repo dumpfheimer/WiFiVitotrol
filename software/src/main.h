@@ -47,6 +47,12 @@ extern bool deviceIdFound;
 extern const long rebootTimeout;
 extern char* linkState;
 
+
+void pushLastMessage(char* msg);
+void pushLastMessage(char prefix, byte* buff, uint8_t size);
+uint8_t getLastMessageSize();
+const char* getLastMessage(uint8_t n);
+
 extern byte buffer[BUFFER_LEN];
 extern byte lastValidMessage[BUFFER_LEN];
 extern byte lastInvalidMessage[BUFFER_LEN];
