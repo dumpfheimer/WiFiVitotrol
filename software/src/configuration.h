@@ -11,8 +11,7 @@
 //#define WIFI_PASSWORD "CHANGEME"
 //#define WIFI_HOST "Virtual Vitotrol"
 #define REBOOT_TIMEOUT (1000*60*15)
-
-
+#define MSG_LOG_SIZE 30
 
 // if you want to use MQTT, uncomment these lines and replace them accordingly
 

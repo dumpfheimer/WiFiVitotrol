@@ -45,9 +45,17 @@ bool deviceIdSent = false;
 bool deviceIdFound = false;
 #endif
 
+unsigned long lastSerialLoop = 0;
+char *lastMessages[MSG_LOG_SIZE];
+uint8_t nextLastMessageIndex = 0;
+
+
 void serialLoop();
 
 void setup() {
+    //lastMessages = (char**) malloc(sizeof(char*) * MSG_LOG_SIZE);
+    for (uint8_t i = 0; i < MSG_LOG_SIZE; i++) lastMessages[i] = nullptr;
+
     strncpy(linkState, "Setup", LINK_STATE_LENGTH);
 #if defined(ESP8266)
     ModbusSerial.begin(1200, MODBUS_BAUD);
@@ -79,7 +87,38 @@ void setup() {
     mqttSetup();
 }
 
-unsigned long lastSerialLoop = 0;
+void pushLastMessage(char* msg) {
+    if (lastMessages[nextLastMessageIndex]) {
+        free(lastMessages[nextLastMessageIndex]);
+        lastMessages[nextLastMessageIndex] = nullptr;
+    }
+    lastMessages[nextLastMessageIndex] = (char *) malloc((strlen(msg) + 1) * sizeof(char));
+    if (lastMessages[nextLastMessageIndex]) {
+        strncpy(lastMessages[nextLastMessageIndex], msg, strlen(msg) + 1);
+    }
+    nextLastMessageIndex = (nextLastMessageIndex + 1) % MSG_LOG_SIZE;
+}
+void pushLastMessage(char prefix, byte* buff, uint8_t size) {
+    if (lastMessages[nextLastMessageIndex]) {
+        free(lastMessages[nextLastMessageIndex]);
+        lastMessages[nextLastMessageIndex] = nullptr;
+    }
+    lastMessages[nextLastMessageIndex] = (char *) malloc((size * 2 + 2) * sizeof(char));
+    if (lastMessages[nextLastMessageIndex]) {
+        strncpy(lastMessages[nextLastMessageIndex], &prefix, 1);
+        for (uint8_t i = 0; i < size; i++) {
+            sprintf(lastMessages[nextLastMessageIndex] + 1 + 2 * i, "%02X", buff[i]);
+        }
+    }
+    nextLastMessageIndex = (nextLastMessageIndex + 1) % MSG_LOG_SIZE;
+}
+uint8_t getLastMessageSize() {
+    return nextLastMessageIndex;
+}
+const char* getLastMessage(uint8_t n) {
+    uint8_t idx = (nextLastMessageIndex + 2 * MSG_LOG_SIZE - n - 1) % MSG_LOG_SIZE;
+    return lastMessages[idx];
+}
 
 void serialLoop() {
     if (!ModbusSerial.available() && (millis() - lastSerialLoop) < 1000) {
@@ -104,12 +143,13 @@ void serialLoop() {
     }
 #endif
 
-    if (millis() - lastReadAt > 100 && bufferPointer > 0) {
+    if (millis() - lastReadAt > 500 && bufferPointer > 0) {
         // receiving took longer than 1s. dump!
-        debugPrintln("\r\nTIMEOUT WHILE READING MESSAGE");
+        debugPrintln("\nTIMEOUT WHILE READING MESSAGE");
         debugPrintln(expectedMessageLength);
         debugPrintln(bufferPointer);
         debugPrintln(bufferReadStart);
+        pushLastMessage('t', buffer, bufferPointer);
         printBuff();
         clearBuff();
         bufferReadStart = 0;
@@ -117,6 +157,7 @@ void serialLoop() {
 
     // read while buffer is not full
     if (bufferPointer >= BUFFER_LEN) {
+        pushLastMessage('o', buffer, bufferPointer);
 #if DEBUG == true
         debugPrintln("BUFFER OVERFLOW");
             printBuff();
@@ -142,7 +183,7 @@ void serialLoop() {
 
         // the 4th byte contains the message length.
         // if the message is as long as the transmitted/expected length, process the message
-        if (buffer[3] == bufferPointer && bufferPointer > 6) {
+        if ((uint8_t) buffer[3] == bufferPointer && bufferPointer > 6) {
             // save time when last complete message was received
             lastMessageAt = millis();
 
@@ -150,6 +191,11 @@ void serialLoop() {
             if (isValidCRC(buffer, bufferPointer)) {
                 // save time when last valid, complete message was received
                 lastValidMessageAt = millis();
+                if (buffer[0] != 0x00 && buffer[1] != 0x11) {
+                    // this is a message we read back from ourselves
+                    // do not push it
+                    pushLastMessage('r', buffer, bufferPointer);
+                }
 
                 if (buffer[0] == 0xFF) {
                     // save time when last broadcast message was received
@@ -213,8 +259,8 @@ void serialLoop() {
                     // copy message to buffer of invalid message
                     memcpy(lastInvalidMessage, buffer, BUFFER_LEN);
                 }
-                return;
             } else {
+                pushLastMessage('c', buffer, bufferPointer);
                 strncpy(linkState, "message with invalid CRC received", LINK_STATE_LENGTH);
 #if DEBUG == true
                 // invalid message
@@ -254,7 +300,7 @@ void loop() {
 #ifndef WIFI_SSID
     }
 #endif
-    serialLoop();
+    while (ModbusSerial.available()) serialLoop();
 }
 
 void notifyCommandReceived() {

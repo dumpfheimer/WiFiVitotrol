@@ -18,7 +18,7 @@ void clearBuff(bool zero) {
     bufferPointer = 0;
 }
 void clearBuff() {
-    clearBuff(false);
+    clearBuff(true);
 }
 
 void printBuff() {

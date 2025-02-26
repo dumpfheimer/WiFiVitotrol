@@ -96,77 +96,92 @@ void wifiHandleGetLinkState() {
 void wifiHandleGetOverview() {
     String ret = "";
     if (lastHeaterCommandReceivedAt > 0 && millis() - lastHeaterCommandReceivedAt < 60000) {
-        ret += "Heater is connected\r\n";
+        ret += "Heater is connected\n";
     } else {
-        ret += "Heater is not connected\r\n";
+        ret += "Heater is not connected\n";
     }
     if (preventCommunication()) {
-        ret += "Communication is prevented\r\n";
+        ret += "Communication is prevented\n";
     } else {
-        ret += "Communication is not prevented\r\n";
+        ret += "Communication is not prevented\n";
     }
 #ifdef FIND_DEVICE_ID
-    if (deviceIdFound) ret += "DeviceID found: 0x" + String(getRegisterValue(0xF9), HEX) + "\r\n";
-    else ret += "Scanning for DeviceID. Currently at 0x" + String(getRegisterValue(0xF9), HEX) + "\r\n";
+    if (deviceIdFound) ret += "DeviceID found: 0x" + String(getRegisterValue(0xF9), HEX) + "\n";
+    else ret += "Scanning for DeviceID. Currently at 0x" + String(getRegisterValue(0xF9), HEX) + "\n";
 #endif
     ret += "Link state: " + String(linkState);
-    ret += "\r\nBuild date: ";
+    ret += "\nBuild date: ";
     ret += __DATE__;
     ret += " ";
     ret += __TIME__;
-    ret += "\r\n";
+    ret += "\n";
     unsigned long m = millis();
-    ret += "\r\nLast com: " + String(m - lastHeaterCommandReceivedAt) + "ms";
-    ret += "\r\nLast read: " + String(m - lastReadAt) + "ms";
+    ret += "\nLast com: " + String(m - lastHeaterCommandReceivedAt) + "ms";
+    ret += "\nLast read: " + String(m - lastReadAt) + "ms";
     ret += " (" + String(readByte, HEX) + ")";
-    ret += "\r\nLast message: " + String(m - lastMessageAt) + "ms";
-    ret += "\r\nLast message - last read: " + String(lastMessageAt - lastReadAt) + "ms";
-    ret += "\r\nLast valid message: " + String(m - lastValidMessageAt) + "ms";
-    ret += "\r\nLast valid broadcast message: " + String(m - lastBroadcastMessage) + "ms";
-    ret += "\r\nLast valid message with response: " + String(m - lastMessageWithResponseAt) + "ms";
-    ret += "\r\nLast valid message without response: " + String(m - lastMessageWithoutResponseAt) + "ms";
-    ret += "\r\nUptime: " + String(m/1000) + "s\r\n\r\n";
+    ret += "\nLast message: " + String(m - lastMessageAt) + "ms";
+    ret += "\nLast message - last read: " + String(lastMessageAt - lastReadAt) + "ms";
+    ret += "\nLast valid message: " + String(m - lastValidMessageAt) + "ms";
+    ret += "\nLast valid broadcast message: " + String(m - lastBroadcastMessage) + "ms";
+    ret += "\nLast valid message with response: " + String(m - lastMessageWithResponseAt) + "ms";
+    ret += "\nLast valid message without response: " + String(m - lastMessageWithoutResponseAt) + "ms";
+    ret += "\nUptime: " + String(m/1000) + "s\n\n";
 
-    ret += "Receive Buffer:\r\n";
+    ret += "Receive Buffer:\n";
     ret += "len: " + String(buffer[3]);
-    ret += "\r\nptr: " + String((unsigned) &buffer, HEX);
-    ret += "\r\ncontent: \r\n";
+    ret += "\nptr: " + String((unsigned) &buffer, HEX);
+    ret += "\ncontent: \n";
     for (int i = 0; i < buffer[3]; i++) ret += String(buffer[i], HEX) + "-";
-    ret += "\r\n\r\nLast message:\r\n";
+    ret += "\n\nLast message:\n";
     ret += "len: " + String(lastValidMessage[3]);
-    ret += "\r\nptr: " + String((unsigned) &lastValidMessage, HEX);
-    ret += "\r\ncontent: \r\n";
+    ret += "\nptr: " + String((unsigned) &lastValidMessage, HEX);
+    ret += "\ncontent: \n";
     for (int i = 0; i < lastValidMessage[3]; i++) ret += String(lastValidMessage[i], HEX) + "-";
-    ret += "\r\n\r\nLast invalid message:\r\n";
+    ret += "\n\nLast invalid message:\n";
     ret += "len: " + String(lastInvalidMessage[3]);
-    ret += "\r\nptr: " + String((unsigned) &lastInvalidMessage, HEX);
-    ret += "\r\ncontent: \r\n";
+    ret += "\nptr: " + String((unsigned) &lastInvalidMessage, HEX);
+    ret += "\ncontent: \n";
     for (int i = 0; i < lastInvalidMessage[3]; i++) ret += String(lastInvalidMessage[i], HEX) + "-";
 
-    ret += "\r\n\r\nResponse Buffer:\r\n";
+    ret += "\n\nResponse Buffer:\n";
     ret += "len: " + String(responseBuffer[3]);
-    ret += "\r\nptr: " + String((unsigned) &responseBuffer, HEX);
-    ret += "\r\ncontent: \r\n";
+    ret += "\nptr: " + String((unsigned) &responseBuffer, HEX);
+    ret += "\ncontent: \n";
     for (int i = 0; i < responseBuffer[3]; i++) ret += String(responseBuffer[i], HEX) + "-";
 
-    ret += "\r\n\r\nData points:\r\n";
+    ret += "\n\nData points:\n";
 
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
-        ret += "\r\n\r\nName: " + String(writableDataPoint[p]->getName()) + "\r\n";
-        ret += "  Value: " + String(writableDataPoint[p]->getValue()) + "\r\n";
-        ret += "  Send Value: " + String(writableDataPoint[p]->getSendValue(), HEX) + "\r\n";
-        ret += "  Prevent communication: " + String(writableDataPoint[p]->preventCommunication()) + "\r\n";
-        ret += "  Has valid value: " + String(writableDataPoint[p]->getHasValidValue()) + "\r\n";
-        ret += "  Write pending: " + String(writableDataPoint[p]->wantsToSendValue()) + "\r\n";
-        ret += "  Last send: " + String(m - writableDataPoint[p]->getLastSend()) + "ms ago\r\n";
-        ret += "  Last set: " + String(m - writableDataPoint[p]->getLastSet()) + "ms ago\r\n";
-        ret += "  Periodic send every " + String(writableDataPoint[p]->getPeriodicSend()) + "ms\r\n";
+        ret += "\n\nName: " + String(writableDataPoint[p]->getName()) + "\n";
+        ret += "  Value: " + String(writableDataPoint[p]->getValue()) + "\n";
+        ret += "  Send Value: " + String(writableDataPoint[p]->getSendValue(), HEX) + "\n";
+        ret += "  Prevent communication: " + String(writableDataPoint[p]->preventCommunication()) + "\n";
+        ret += "  Has valid value: " + String(writableDataPoint[p]->getHasValidValue()) + "\n";
+        ret += "  Write pending: " + String(writableDataPoint[p]->wantsToSendValue()) + "\n";
+        ret += "  Last send: " + String(m - writableDataPoint[p]->getLastSend()) + "ms ago\n";
+        ret += "  Last set: " + String(m - writableDataPoint[p]->getLastSet()) + "ms ago\n";
+        ret += "  Periodic send every " + String(writableDataPoint[p]->getPeriodicSend()) + "ms\n";
         ret += "  Prevent communication after " + String(writableDataPoint[p]->getPreventCommunicationAfter()) +
-               "ms\r\n";
+               "ms\n";
         p++;
     }
 
+    server.send(200, "text/plain", ret);
+}
+
+void wifiHandleGetLog() {
+    String ret = "most recent first\n";
+    for (int8_t i = 0; i <MSG_LOG_SIZE; i++) {
+        const char* ptr = getLastMessage(i);
+        if (ptr != nullptr) {
+            if (i < 10) ret += "0";
+            ret += String(i) + ": " + String(ptr) + "\n";
+        }
+        else {
+            ret += "null\n";
+        }
+    }
     server.send(200, "text/plain", ret);
 }
 
@@ -250,6 +265,7 @@ void setupWifi() {
     }
 
     server.on("/", wifiHandleGetOverview);
+    server.on("/log", wifiHandleGetLog);
     server.on("/linkState", wifiHandleGetLinkState);
     server.on("/get", wifiHandleGetData);
     server.on("/set", HTTP_POST, wifiHandleSetData);
@@ -276,3 +292,28 @@ void setupWifi() {
 void wifiLoop() {
     server.handleClient();
 }
+/*
+async function delay(ms) {
+    return new Promise(resolve => {
+        setInterval(resolve, ms);
+    });
+}
+async function waitForRequestDatasetSent() {
+    while (true) {
+        let r = await fetch("/getRequestDataset");
+        let t = await r.text();
+        if (t == "0") return;
+        else await delay(500);
+    }
+}
+async function requestDataset(id) {
+    let r = await fetch("/requestDataset?id=" + encodeURIComponent(id));
+}
+async function requestAllDatasets() {
+    let i = 0;
+    while (i < 256) {
+        await requestDataset(i++);
+        await waitForRequestDatasetSent();
+    }
+}
+ */

@@ -7,6 +7,7 @@
 uint8_t table[255] = {0};
 
 void initRegisters() {
+    table[0x00] = 1;
     table[0xF8] = DEVICE_CLASS;
     table[0xF9] = DEVICE_ID;
     table[0xFA] = DEVICE_SN1;
