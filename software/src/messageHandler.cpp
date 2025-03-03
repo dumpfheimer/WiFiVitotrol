@@ -1,14 +1,5 @@
 #include "messageHandler.h"
 
-#define MSG_PING 0x00
-#define MSG_MASTER_REQUESTING_REQUEST_1 0x31
-#define MSG_MASTER_REQUESTING_REQUEST_N 0x33
-// 11-0-3f-12-1-1-34-a8-a8-a2-4b-ae-65-fd-16-cd-56-be-
-#define MSG_MASTER_REQUESTING_REQUEST_DATASET 0x3F
-#define MSG_PONG 0x80
-#define MST_MASTER_SENDING_DATA_1 0xB1
-#define MST_MASTER_SENDING_DATA_N 0xB3
-#define MST_MASTER_SENDING_DATASET 0xBF
 
 byte requestedDataResponseBuffer[512] = {0};
 
@@ -24,24 +15,6 @@ const unsigned char sendEcoModeOnTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x0
 const unsigned char sendEcoModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x77, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xBD, 0x8E};
 const unsigned char sendPartyModeOnTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x65, 0xBE, 0xAA, 0xAA, 0xAA, 0xAA, 0x0B, 0x5D};
 const unsigned char sendPartyModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x66, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x26, 0xC8};*/
-
-bool workPing() {
-    if (prepareNextDataWrite()) {
-        strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
-        return true;
-    } else if (requestDataset > 0) {
-        requestedDataResponseBuffer[0] = requestDataset;
-        prepareResponse(0x3F, requestedDataResponseBuffer, 1);
-        snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDataset);
-        requestDataset = 0;
-        return true;
-    } else {
-        // send empty pong
-        prepareResponse(MSG_PONG, nullptr, 0);
-        strncpy(linkState, "sent pong", LINK_STATE_LENGTH);
-        return true;
-    }
-}
 
 bool workMasterRequestedN(uint8_t addr, uint8_t len) {
     for (int x = 0; x < len; x++) {
@@ -62,8 +35,14 @@ bool workMasterRequested1(uint8_t addr) {
     return true;
 }
 
-bool workMasterSentDataset(byte message[], uint8_t messageLength) {
+bool workMasterSentCommand(byte message[], uint8_t messageLength) {
     //0-11-bf-c-1-1-20-63-aa-aa-e1-a6-
+
+    if (message[0] == 0x34 && messageLength > 3) {
+        message[3] = message[3] ^ 0xAA;
+        return workMasterSentCommand(&message[3], messageLength - 3);
+    }
+
     for (int i = 1; i < messageLength; i++) message[i] = message[i] ^ 0xAA;
     setDataset(message[0], &message[1], messageLength - 1);
 
@@ -89,6 +68,24 @@ bool workMasterSentN(byte buffer[]) {
     return true;
 }
 
+bool workPing() {
+    if (prepareNextDataWrite()) {
+        strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
+        return true;
+    } else if (requestDataset > 0) {
+        requestedDataResponseBuffer[0] = requestDataset;
+        prepareResponse(MSG_UNKNOWN, requestedDataResponseBuffer, 1);
+        snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDataset);
+        requestDataset = 0;
+        return true;
+    } else {
+        // send empty pong
+        prepareResponse(MSG_PONG, nullptr, 0);
+        strncpy(linkState, "sent pong", LINK_STATE_LENGTH);
+        return true;
+    }
+}
+
 // will return whether the message could be processed
 bool workMessageAndCreateResponseBuffer(byte buff[]) {
     uint8_t destinationClass = buff[0];
@@ -104,25 +101,25 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
     byte *msg = &buff[6];
     uint8_t msgLen = len - 6 - 2; // 6=header 2=crc
 
-    if (cmd != MSG_MASTER_REQUESTING_REQUEST_N || msg[0] != 0xF8) {
+    if (cmd != MSG_REQUEST_N_BYTES || msg[0] != 0xF8) {
         lastHeaterCommandReceivedAt = millis();
     }
     snprintf(linkState, LINK_STATE_LENGTH, "working message %02X", cmd);
     switch (cmd) {
         case MSG_PING:
             return workPing();
-        case MSG_MASTER_REQUESTING_REQUEST_1:
+        case MSG_REQUEST_1_BYTE:
             return workMasterRequested1(buff[6]);
-        case MSG_MASTER_REQUESTING_REQUEST_N:
+        case MSG_REQUEST_N_BYTES:
             return workMasterRequestedN(msg[0], msg[1]);
-        case MST_MASTER_SENDING_DATA_1:
+        case MSG_SENDING_1_BYTE:
             return workMasterSent1(msg[0], msg[1]);
-        case MST_MASTER_SENDING_DATA_N:
+        case MSG_SENDING_N_BYTES:
             return workMasterSentN(msg);
-        case MST_MASTER_SENDING_DATASET:
-        case MSG_MASTER_REQUESTING_REQUEST_DATASET:
+        case MSG_UNKNOWN:
+        case MSG_SENDING_COMMAND:
             //return false;
-            return workMasterSentDataset(msg, msgLen);
+            return workMasterSentCommand(msg, msgLen);
         default:
 #if DEBUG == true
             debugPrintln("not sure how to handle message:");

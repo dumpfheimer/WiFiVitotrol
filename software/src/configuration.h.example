@@ -23,13 +23,15 @@
 #define DEVICE_ID 0x34
 #define DEVICE_SN1 0x00
 #define DEVICE_SN2 0x05
+// this is also the heating circuit
+// WiFiVitotrol is not tested with anything other than 0x01
 #define DEVICE_SLOT 0x01
 
 // vitotrol 300
 //#define DEVICE_ID 0x38
 //#define DEVICE_SN1 0x00
 //#define DEVICE_SN2 0x11
-//#define DEVICE_SLOT 0x02
+//#define DEVICE_SLOT 0x01
 
 #define MODBUS_BAUD SERIAL_8E1
 #define ModbusSerial Serial1
