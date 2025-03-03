@@ -185,20 +185,40 @@ void wifiHandleGetLog() {
     server.send(200, "text/plain", ret);
 }
 
-void wifiHandleReadDatasets() {
-    String ret = "{";
-        for(int i = 0; i < DATASETS; i++) {
-            Dataset *d = getDataset(i);
-            if (d != nullptr) {
-                ret += String(i) + ": [";
-                for (int i2 = 0; i2 < d->len; i2++) {
-                    ret += String(d->data[i2]);
-                    if (i2+1 < d->len) ret += ",";
-                }
-                ret += "]";
-            }
+void wifiHandleReadDataset() {
+    if (!server.hasArg("id")) {
+        server.send(500, "text/plain", "id paramater missing");
+        return;
+    }
+    int id = server.arg("id").toInt();
+    String ret = "{ ";
+    Dataset *d = getDataset(id);
+    if (d != nullptr) {
+        ret += "\n" + String(id) + ": [";
+        for (int i2 = 0; i2 < d->len; i2++) {
+            ret += String(d->data[i2]);
+            if (i2+1 < d->len) ret += ",";
         }
+        ret += "]";
+    }
+    ret += "\n}";
+    server.send(200, "application/json", ret);
+}
+void wifiHandleReadDatasets() {
+    String ret = "{ ";
+    for(int i = 0; i < DATASETS; i++) {
+        Dataset *d = getDataset(i);
+        if (d != nullptr) {
+            ret += "\n" + String(i) + ": [";
+            for (int i2 = 0; i2 < d->len; i2++) {
+                ret += String(d->data[i2]);
+                if (i2+1 < d->len) ret += ",";
+            }
+            ret += "],";
+        }
+    }
     ret += "}";
+    ret.setCharAt(ret.length() - 2, '\n');
     server.send(200, "application/json", ret);
 }
 
@@ -272,6 +292,7 @@ void setupWifi() {
     server.on("/isConnected", wifiHandleIsConnected);
     server.on("/reboot", wifiHandleReboot);
     server.on("/registers", wifiHandleReadRegisters);
+    server.on("/dataset", wifiHandleReadDataset);
     server.on("/datasets", wifiHandleReadDatasets);
     server.on("/requestDataset", wifiHandleRequestDataset);
     server.on("/getRequestDataset", wifiHandleGetRequestDataset);
