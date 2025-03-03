@@ -1,9 +1,9 @@
-= KM-BUS Protocol (incomplete)
-== Resources
+# KM-BUS Protocol (incomplete)
+## Resources
 A lot of information can be found @ https://github.com/openv/openv/wiki/KM-Bus
 But the page is incomplete and, I think, gets some basics of the 0xBF / 0x3F command wrong
 
-== Basic packet structure
+## Basic packet structure
 
 [DA][SA][CMD][LEN][DC][SC][.*][CRC][CRC]
 
@@ -16,7 +16,7 @@ SC: I am guessing this is an internal source identifier. (Described as "Source s
 .*: Data (optional)
 CRC: 2 bytes of CRC
 
-== Commands
+## Commands
 0x00 Noop / Ping
 0x80 Noop / Pong
 0x31 requesting 1 byte
@@ -26,12 +26,12 @@ CRC: 2 bytes of CRC
 0xb3 sending n bytes
 0xbf command ??
 
-== Addresses
+## Addresses
 0x00 Master
 0x11 Vitotrol
 0x20 Vitocom
 
-== Examples
+## Examples
 
 110000080101CCCC
 11 (DA, Vitotrol) is receiving from
@@ -43,7 +43,7 @@ CRC: 2 bytes of CRC
 r11003F12010134A8A8A24BAE429D6ACD0D3A
 
 
-== Data
+## Data
 Registers (with faked registers)
 Heater off:
 {
