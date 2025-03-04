@@ -15,6 +15,21 @@ void prepareSendCurrentRoomTemperature() {
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(MSG_SENDING_COMMAND, ret, 4);
 }
+// the current room temperature
+void prepareSendCurrentRoomTemperatureH2() {
+    // send current room temperature
+    byte ret[4];
+    ret[0] = 0x20;
+    if (currentRoomTemperatureH2->getFloatValue() > 25.5) {
+        ret[1] = ((int) currentRoomTemperatureH2->getValue() - 256) ^ 0xAA;
+        ret[2] = 0x01 ^ 0xAA;
+    } else {
+        ret[1] = currentRoomTemperatureH2->getSendValue() ^ 0xAA;
+        ret[2] = 0x00 ^ 0xAA;
+    }
+    ret[3] = 0x00 ^ 0xAA;
+    prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x02);
+}
 
 // the desired room temperature
 void prepareSendDesiredRoomTemperature() {

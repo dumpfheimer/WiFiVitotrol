@@ -11,6 +11,8 @@
 
 extern class WritableData *currentRoomTemperature;
 
+extern class WritableData *currentRoomTemperatureH2;
+
 extern class WritableData *desiredRoomTemperature;
 
 void configureData();

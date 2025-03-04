@@ -15,13 +15,13 @@ void addCRCToBuffer(uint8_t bufferLength) {
     responseBuffer[bufferLength + 1] = b2;
 }
 
-void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen) {
+void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen, uint8_t circuit) {
     clearResponseBuffer();
     responseBuffer[0] = 0x00; // dest class
     responseBuffer[1] = DEVICE_CLASS; // source class
     responseBuffer[2] = cmd;  // cmd
     responseBuffer[3] = 8 + msgLen;  // length
-    responseBuffer[4] = DEVICE_SLOT;
+    responseBuffer[4] = circuit;
     responseBuffer[5] = 0x01;
 
     // copy msg to responseBuffer
@@ -31,6 +31,9 @@ void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen) {
 
     // calculate crc
     addCRCToBuffer(msgLen + 6); // first empty slot after message
+}
+void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen) {
+    return prepareResponse(cmd, msg, msgLen, DEVICE_SLOT);
 }
 
 void sendResponse() {
