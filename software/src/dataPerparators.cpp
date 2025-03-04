@@ -19,7 +19,7 @@ void prepareSendCurrentRoomTemperature() {
 void prepareSendCurrentRoomTemperatureH2() {
     // send current room temperature
     byte ret[4];
-    ret[0] = 0x20;
+    ret[0] = 0x21;
     if (currentRoomTemperatureH2->getFloatValue() > 25.5) {
         ret[1] = ((int) currentRoomTemperatureH2->getValue() - 256) ^ 0xAA;
         ret[2] = 0x01 ^ 0xAA;
