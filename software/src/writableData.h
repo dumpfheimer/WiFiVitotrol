@@ -13,6 +13,7 @@
 
 class WritableData {
     char *name = NULL;
+    uint8_t slot = 1;
     uint16_t value = 0;
     DataSource source;
     DataType type;
@@ -65,17 +66,21 @@ public:
     void preventCommunicationAfter(unsigned long preventCommunicationAfterMS);
 
     void init(String name, DataType t, unsigned long periodicSend, void (*perparationFunction)());
+
+    uint8_t getSlot();
+
+    void setSlot(uint8_t slot);
 };
 
 extern WritableData *writableDataPoint[WRITABLE_DATAPOINT_SIZE];
 
-bool preventCommunication();
+bool preventCommunication(uint8_t slot);
 
 class WritableData *getWritableDataByName(String name);
 
 class WritableData *
-createWritableDataPoint(String name, DataType t, unsigned long periodicSend, void (*preparationFunction)());
+createWritableDataPoint(String name, DataType t, unsigned long periodicSend, uint8_t slot, void (*preparationFunction)());
 
-bool prepareNextDataWrite();
+bool prepareNextDataWrite(uint8_t slot);
 
 #endif //SOFTWARE_WRITABLEDATA_H

@@ -13,7 +13,7 @@ void prepareSendCurrentRoomTemperature() {
         ret[2] = 0x00 ^ 0xAA;
     }
     ret[3] = 0x00 ^ 0xAA;
-    prepareResponse(MSG_SENDING_COMMAND, ret, 4);
+    prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x01);
 }
 // the current room temperature
 void prepareSendCurrentRoomTemperatureH2() {
@@ -41,5 +41,5 @@ void prepareSendDesiredRoomTemperature() {
     ret[3] = 0xCD ^ 0xAA; // 67 CD=normal room temperature CE=reduced room temperature
     ret[4] = desiredRoomTemperature->getSendValue() ^ 0xAA; // the temperature
     ret[5] = 0x00 ^ 0xAA;
-    prepareResponse(MSG_SENDING_COMMAND, ret, 6);
+    prepareResponse(MSG_SENDING_COMMAND, ret, 6, 0x01);
 }

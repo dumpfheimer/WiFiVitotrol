@@ -10,7 +10,6 @@
 
 void clearResponseBuffer();
 void addCRCToBuffer(uint8_t bufferLength);
-void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen);
 void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen, uint8_t circuit);
 void sendResponse();
 

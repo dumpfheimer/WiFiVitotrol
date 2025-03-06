@@ -6,6 +6,11 @@
 // VITOTROL CONFIGURATION
 //#define DEVICE_CLASS 0x11
 
+#define MAX_SLOTS 3
+#define ENABLE_SLOT_1
+//#define ENABLE_SLOT_2
+//#define ENABLE_SLOT_3
+
 // vitotrol 200
 //#define DEVICE_ID 0x34
 //#define DEVICE_SN1 0x00

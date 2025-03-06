@@ -32,9 +32,6 @@ void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen, uint8_t circ
     // calculate crc
     addCRCToBuffer(msgLen + 6); // first empty slot after message
 }
-void prepareResponse(uint8_t cmd, const byte msg[], uint8_t msgLen) {
-    return prepareResponse(cmd, msg, msgLen, DEVICE_SLOT);
-}
 
 void sendResponse() {
     if (isValidCRC(responseBuffer, responseBuffer[3])) {

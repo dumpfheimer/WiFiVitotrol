@@ -128,6 +128,14 @@ void WritableData::init(String name, DataType t, unsigned long periodicSend, voi
     this->preventCommunicationAfterMS = (unsigned long) 0;
 }
 
+uint8_t WritableData::getSlot() {
+    return this->slot;
+}
+
+void WritableData::setSlot(uint8_t slot) {
+    this->slot = slot;
+}
+
 class WritableData *getWritableDataByName(String name) {
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
@@ -141,7 +149,7 @@ class WritableData *getWritableDataByName(String name) {
 }
 
 class WritableData *
-createWritableDataPoint(String name, DataType t, unsigned long periodicSend, void (*preparationFunction)()) {
+createWritableDataPoint(String name, DataType t, unsigned long periodicSend, uint8_t slot, void (*preparationFunction)()) {
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) p++;
 
@@ -153,12 +161,13 @@ createWritableDataPoint(String name, DataType t, unsigned long periodicSend, voi
     //struct WritableData *pointer = (WritableData*)malloc(sizeof(struct WritableData));
     writableDataPoint[p] = new WritableData();
     writableDataPoint[p]->init(name, t, periodicSend, preparationFunction);
+    writableDataPoint[p]->setSlot(slot);
     return writableDataPoint[p];
 }
 
-bool prepareNextDataWrite() {
+bool prepareNextDataWrite(uint8_t slot) {
     uint8_t p = 0;
-    while (writableDataPoint[p] != nullptr) {
+    while (writableDataPoint[p]->getSlot() == slot && writableDataPoint[p] != nullptr) {
         if (writableDataPoint[p]->wantsToSendValue()) {
             writableDataPoint[p]->prepare();
             return true;
@@ -168,10 +177,10 @@ bool prepareNextDataWrite() {
     return false;
 }
 
-bool preventCommunication() {
+bool preventCommunication(uint8_t slot) {
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
-        if (writableDataPoint[p]->preventCommunication()) {
+        if (writableDataPoint[p]->getSlot() == slot && writableDataPoint[p]->preventCommunication()) {
             return true;
         }
         p++;

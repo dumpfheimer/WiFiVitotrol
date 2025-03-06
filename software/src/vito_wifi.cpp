@@ -100,10 +100,14 @@ void wifiHandleGetOverview() {
     } else {
         ret += "Heater is not connected\n";
     }
-    if (preventCommunication()) {
-        ret += "Communication is prevented\n";
-    } else {
-        ret += "Communication is not prevented\n";
+    for (uint16_t s = 0; s < getSlotCount(); s++) {
+        uint8_t slot = getSlot(s);
+        ret += "Slot " + String(slot) + ": ";
+        if (preventCommunication(slot)) {
+            ret += "Communication is prevented\n";
+        } else {
+            ret += "Communication is not prevented\n";
+        }
     }
 #ifdef FIND_DEVICE_ID
     if (deviceIdFound) ret += "DeviceID found: 0x" + String(getRegisterValue(0xF9), HEX) + "\n";
@@ -230,14 +234,6 @@ void wifiHandleReadRegisters() {
     }
     ret += "]";
     server.send(200, "application/json", ret);
-}
-
-void wifiHandleIsPreventCommunication() {
-    if (preventCommunication()) {
-        server.send(200, "text/plain", "true");
-    } else {
-        server.send(200, "text/plain", "false");
-    }
 }
 
 void wifiHandleIsConnected() {

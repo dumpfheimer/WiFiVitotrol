@@ -49,10 +49,34 @@ unsigned long lastSerialLoop = 0;
 char *lastMessages[MSG_LOG_SIZE];
 uint8_t nextLastMessageIndex = 0;
 
+uint8_t slotCount = 0;
+uint8_t *slots = new uint8_t[MAX_SLOTS];
 
 void serialLoop();
 
+uint8_t getSlotCount() {
+    return slotCount;
+}
+uint8_t getSlot(uint8_t n) {
+    if (n < MAX_SLOTS) return slots[n];
+    else return 0;
+}
+void addSlot(uint8_t slot) {
+    if (slotCount < MAX_SLOTS) {
+        slots[slotCount++] = slot;
+    }
+}
+
 void setup() {
+#ifdef ENABLE_SLOT_1
+    addSlot(1);
+#endif
+#ifdef ENABLE_SLOT_2
+    addSlot(2);
+#endif
+#ifdef ENABLE_SLOT_3
+addSlot(3);
+#endif
     //lastMessages = (char**) malloc(sizeof(char*) * MSG_LOG_SIZE);
     for (uint8_t i = 0; i < MSG_LOG_SIZE; i++) lastMessages[i] = nullptr;
 
@@ -127,21 +151,6 @@ void serialLoop() {
     }
     lastSerialLoop = millis();
     // only speak to heater when no datapoint is preventing it
-#ifndef FIND_DEVICE_ID
-    if (preventCommunication()) {
-        bool wasAvail = false;
-        while (ModbusSerial.available()) {
-            ModbusSerial.read();
-            wasAvail = true;
-            lastReadAt = millis();
-        }
-        if (wasAvail) {
-            strncpy(linkState, "Did not respond to heater because datapoint prevented it", LINK_STATE_LENGTH);
-        }
-        debugPrintln("not talking to heater");
-        return;
-    }
-#endif
 
     if (millis() - lastReadAt > 500 && bufferPointer > 0) {
         // receiving took longer than 1s. dump!
@@ -189,6 +198,15 @@ void serialLoop() {
 
             // check the checksum
             if (isValidCRC(buffer, bufferPointer)) {
+#ifndef FIND_DEVICE_ID
+                if (preventCommunication(buffer[4])) {
+                    pushLastMessage('p', buffer, bufferPointer);
+                    strncpy(linkState, "Did not respond to heater because datapoint prevented it", LINK_STATE_LENGTH);
+                    clearBuff();
+                    debugPrintln("not talking to heater");
+                    return;
+                }
+#endif
                 // save time when last valid, complete message was received
                 lastValidMessageAt = millis();
                 if (buffer[0] != 0x00 && buffer[1] != 0x11) {
@@ -221,7 +239,7 @@ void serialLoop() {
                 }
 #endif
 
-                if ((buffer[0] == 0xFF) || (buffer[0] == DEVICE_CLASS && buffer[4] == DEVICE_SLOT)) {
+                if ((buffer[0] == 0xFF) || (buffer[0] == DEVICE_CLASS)) {
                     // a valid message was received (CRC match)
                     // copy invalid message to buffer of invalid message
                     memcpy(lastValidMessage, buffer, BUFFER_LEN);

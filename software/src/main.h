@@ -53,6 +53,10 @@ void pushLastMessage(char prefix, byte* buff, uint8_t size);
 uint8_t getLastMessageSize();
 const char* getLastMessage(uint8_t n);
 
+uint8_t getSlotCount();
+uint8_t getSlot(uint8_t n);
+void addSlot(uint8_t slot);
+
 extern byte buffer[BUFFER_LEN];
 extern byte lastValidMessage[BUFFER_LEN];
 extern byte lastInvalidMessage[BUFFER_LEN];

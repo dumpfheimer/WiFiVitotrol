@@ -16,71 +16,71 @@ const unsigned char sendEcoModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x
 const unsigned char sendPartyModeOnTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x65, 0xBE, 0xAA, 0xAA, 0xAA, 0xAA, 0x0B, 0x5D};
 const unsigned char sendPartyModeOffTelegram[] = {0x00, 0x11, 0xBF, 0x11, 0x02, 0x01, 0x14, 0xAA, 0xAB,0x66, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x26, 0xC8};*/
 
-bool workMasterRequestedN(uint8_t addr, uint8_t len) {
+bool workMasterRequestedN(uint8_t slot, uint8_t addr, uint8_t len) {
     for (int x = 0; x < len; x++) {
         requestedDataResponseBuffer[2*x] = addr + x;
         requestedDataResponseBuffer[2*x+1] = getRegisterValue(addr + x);
     }
-    prepareResponse(0xB3, requestedDataResponseBuffer, len * 2);
+    prepareResponse(0xB3, requestedDataResponseBuffer, len * 2, slot);
     snprintf(linkState, LINK_STATE_LENGTH, "master requested %d bytes from %02X", len, addr);
     return true;
 }
 
-bool workMasterRequested1(uint8_t addr) {
+bool workMasterRequested1(uint8_t slot, uint8_t addr) {
     requestedDataResponseBuffer[0] = addr;
     requestedDataResponseBuffer[1] = getRegisterValue(addr);
 
-    prepareResponse(0xB1, requestedDataResponseBuffer, 2);
+    prepareResponse(0xB1, requestedDataResponseBuffer, 2, slot);
     snprintf(linkState, LINK_STATE_LENGTH, "master requested byte at address %02X", addr);
     return true;
 }
 
-bool workMasterSentCommand(byte message[], uint8_t messageLength) {
+bool workMasterSentCommand(uint8_t slot, byte message[], uint8_t messageLength) {
     //0-11-bf-c-1-1-20-63-aa-aa-e1-a6-
 
     if (message[0] == 0x34 && messageLength > 3) {
         message[3] = message[3] ^ 0xAA;
-        return workMasterSentCommand(&message[3], messageLength - 3);
+        return workMasterSentCommand(slot, &message[3], messageLength - 3);
     }
 
     for (int i = 1; i < messageLength; i++) message[i] = message[i] ^ 0xAA;
     setDataset(message[0], &message[1], messageLength - 1);
 
-    prepareResponse(MSG_PONG, nullptr, 0);
+    prepareResponse(MSG_PONG, nullptr, 0, slot);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent %d bytes to dataset %02X", messageLength - 1, message[0]);
     return true;
 }
 
-bool workMasterSent1(uint8_t addr, uint8_t value) {
+bool workMasterSent1(uint8_t slot, uint8_t addr, uint8_t value) {
     setRegister(addr, 1, &value);
-    prepareResponse(MSG_PONG, nullptr, 0);
+    prepareResponse(MSG_PONG, nullptr, 0, slot);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent byte to address %02X", addr);
     return true;
 }
 
-bool workMasterSentN(byte buffer[]) {
+bool workMasterSentN(uint8_t slot, byte buffer[]) {
     int regCount = buffer[0];
     for (int x = 0; x < regCount; x++) {
         setRegister(buffer[1+2*x], 1, &buffer[2+2*x]);
     }
-    prepareResponse(MSG_PONG, nullptr, 0);
+    prepareResponse(MSG_PONG, nullptr, 0, slot);
     snprintf(linkState, LINK_STATE_LENGTH, "master sent %d bytes", regCount);
     return true;
 }
 
-bool workPing() {
-    if (prepareNextDataWrite()) {
+bool workPing(uint8_t slot) {
+    if (prepareNextDataWrite(slot)) {
         strncpy(linkState, "sent dataset", LINK_STATE_LENGTH);
         return true;
     } else if (requestDataset > 0) {
         requestedDataResponseBuffer[0] = requestDataset;
-        prepareResponse(MSG_UNKNOWN, requestedDataResponseBuffer, 1);
+        prepareResponse(MSG_UNKNOWN, requestedDataResponseBuffer, 1, slot);
         snprintf(linkState, LINK_STATE_LENGTH, "requested dataset %02X", requestDataset);
         requestDataset = 0;
         return true;
     } else {
         // send empty pong
-        prepareResponse(MSG_PONG, nullptr, 0);
+        prepareResponse(MSG_PONG, nullptr, 0, slot);
         strncpy(linkState, "sent pong", LINK_STATE_LENGTH);
         return true;
     }
@@ -92,7 +92,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
     uint8_t sourceClass = buff[1];
     uint8_t cmd = buff[2];
     uint8_t len = buff[3];
-    uint8_t dsl = buff[4];
+    uint8_t slot = buff[4];
     uint8_t ssk = buff[5];
 
     if (destinationClass != DEVICE_CLASS && destinationClass != 0xFF) return false;
@@ -107,19 +107,19 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
     snprintf(linkState, LINK_STATE_LENGTH, "working message %02X", cmd);
     switch (cmd) {
         case MSG_PING:
-            return workPing();
+            return workPing(slot);
         case MSG_REQUEST_1_BYTE:
-            return workMasterRequested1(buff[6]);
+            return workMasterRequested1(slot, buff[6]);
         case MSG_REQUEST_N_BYTES:
-            return workMasterRequestedN(msg[0], msg[1]);
+            return workMasterRequestedN(slot, msg[0], msg[1]);
         case MSG_SENDING_1_BYTE:
-            return workMasterSent1(msg[0], msg[1]);
+            return workMasterSent1(slot, msg[0], msg[1]);
         case MSG_SENDING_N_BYTES:
-            return workMasterSentN(msg);
+            return workMasterSentN(slot, msg);
         case MSG_UNKNOWN:
         case MSG_SENDING_COMMAND:
             //return false;
-            return workMasterSentCommand(msg, msgLen);
+            return workMasterSentCommand(slot, msg, msgLen);
         default:
 #if DEBUG == true
             debugPrintln("not sure how to handle message:");
