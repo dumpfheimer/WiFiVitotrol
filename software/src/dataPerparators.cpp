@@ -1,5 +1,6 @@
 #include "dataPerparators.h"
 
+#ifdef ENABLE_SLOT_1
 // the current room temperature
 void prepareSendCurrentRoomTemperature() {
     // send current room temperature
@@ -15,6 +16,21 @@ void prepareSendCurrentRoomTemperature() {
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x01);
 }
+
+// the desired room temperature
+void prepareSendDesiredRoomTemperature() {
+    // send desired room temperature
+    byte ret[6];
+    ret[0] = 0x15; // 14 Command / Table
+    ret[1] = 0x0C ^ 0xAA; // AA ignored?!
+    ret[2] = 0x01 ^ 0xAA; // AB Heizkreis?!
+    ret[3] = 0xCD ^ 0xAA; // 67 CD=normal room temperature CE=reduced room temperature
+    ret[4] = desiredRoomTemperature->getSendValue() ^ 0xAA; // the temperature
+    ret[5] = 0x00 ^ 0xAA;
+    prepareResponse(MSG_SENDING_COMMAND, ret, 6, 0x01);
+}
+#endif
+
 #ifdef ENABLE_SLOT_2
 // the current room temperature
 void prepareSendCurrentRoomTemperatureH2() {
@@ -30,6 +46,19 @@ void prepareSendCurrentRoomTemperatureH2() {
     }
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x02);
+}
+
+// the desired room temperature
+void prepareSendDesiredRoomTemperatureH2() {
+    // send desired room temperature
+    byte ret[6];
+    ret[0] = 0x16; // 14 Command / Table
+    ret[1] = 0x0C ^ 0xAA; // AA ignored?!
+    ret[2] = 0x01 ^ 0xAA; // AB Heizkreis?!
+    ret[3] = 0xCD ^ 0xAA; // 67 CD=normal room temperature CE=reduced room temperature
+    ret[4] = desiredRoomTemperatureH2->getSendValue() ^ 0xAA; // the temperature
+    ret[5] = 0x00 ^ 0xAA;
+    prepareResponse(MSG_SENDING_COMMAND, ret, 6, 0x02);
 }
 #endif
 
@@ -49,17 +78,16 @@ void prepareSendCurrentRoomTemperatureH3() {
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x02);
 }
-#endif
-
 // the desired room temperature
-void prepareSendDesiredRoomTemperature() {
+void prepareSendDesiredRoomTemperatureH3() {
     // send desired room temperature
     byte ret[6];
-    ret[0] = 0x15; // 14 Command / Table
+    ret[0] = 0x17; // 14 Command / Table
     ret[1] = 0x0C ^ 0xAA; // AA ignored?!
     ret[2] = 0x01 ^ 0xAA; // AB Heizkreis?!
     ret[3] = 0xCD ^ 0xAA; // 67 CD=normal room temperature CE=reduced room temperature
-    ret[4] = desiredRoomTemperature->getSendValue() ^ 0xAA; // the temperature
+    ret[4] = desiredRoomTemperatureH3->getSendValue() ^ 0xAA; // the temperature
     ret[5] = 0x00 ^ 0xAA;
-    prepareResponse(MSG_SENDING_COMMAND, ret, 6, 0x01);
+    prepareResponse(MSG_SENDING_COMMAND, ret, 6, 0x03);
 }
+#endif

@@ -75,7 +75,7 @@ void setup() {
     addSlot(2);
 #endif
 #ifdef ENABLE_SLOT_3
-addSlot(3);
+    addSlot(3);
 #endif
     //lastMessages = (char**) malloc(sizeof(char*) * MSG_LOG_SIZE);
     for (uint8_t i = 0; i < MSG_LOG_SIZE; i++) lastMessages[i] = nullptr;
