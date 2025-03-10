@@ -167,8 +167,8 @@ createWritableDataPoint(String name, DataType t, unsigned long periodicSend, uin
 
 bool prepareNextDataWrite(uint8_t slot) {
     uint8_t p = 0;
-    while (writableDataPoint[p]->getSlot() == slot && writableDataPoint[p] != nullptr) {
-        if (writableDataPoint[p]->wantsToSendValue()) {
+    while (writableDataPoint[p] != nullptr) {
+        if (writableDataPoint[p]->wantsToSendValue() && writableDataPoint[p]->getSlot() == slot) {
             writableDataPoint[p]->prepare();
             return true;
         }

@@ -8,7 +8,7 @@
 
 #define MAX_SLOTS 3
 #define ENABLE_SLOT_1
-//#define ENABLE_SLOT_2
+#define ENABLE_SLOT_2
 //#define ENABLE_SLOT_3
 
 // vitotrol 200
