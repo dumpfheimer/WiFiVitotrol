@@ -16,7 +16,12 @@ char mqttTopicBuffer[MQTT_TOPIC_BUFFER_LENGTH];
 char mqttMessageBuffer[MQTT_MESSAGE_BUFFER_LENGTH];
 
 float lastCurrentRoomTemperature = -999;
+#ifdef ENABLE_SLOT_2
 float lastCurrentRoomTemperatureH2 = -999;
+#endif
+#ifdef ENABLE_SLOT_3
+float lastCurrentRoomTemperatureH3 = -999;
+#endif
 float lastDesiredRoomTemperature = -999;
 
 void sendPing() {
@@ -39,6 +44,7 @@ void sendCurrentRoomTemperature() {
     }
 }
 
+#ifdef ENABLE_SLOT_2
 void sendCurrentRoomTemperatureH2() {
     if (client.connected()) {
         float f = currentRoomTemperatureH2->getFloatValue();
@@ -49,6 +55,19 @@ void sendCurrentRoomTemperatureH2() {
         }
     }
 }
+#endif
+#ifdef ENABLE_SLOT_3
+void sendCurrentRoomTemperatureH3() {
+    if (client.connected()) {
+        float f = currentRoomTemperatureH3->getFloatValue();
+        if (snprintf(mqttMessageBuffer, MQTT_TOPIC_BUFFER_LENGTH, "%.1f", f)) {
+            lastCurrentRoomTemperatureH3 = f;
+            strncpy(mqttTopicBuffer, "virtualvitotrol/currentRoomTemperatureH3", MQTT_TOPIC_BUFFER_LENGTH);
+            client.publish(mqttTopicBuffer, mqttMessageBuffer, true);
+        }
+    }
+}
+#endif
 
 void sendDesiredRoomTemperature() {
     if (client.connected()) {
@@ -101,7 +120,12 @@ void mqttReconnect() {
                 sendPing();
                 sendConnected();
                 sendCurrentRoomTemperature();
+#ifdef ENABLE_SLOT_2
                 sendCurrentRoomTemperatureH2();
+#endif
+#ifdef ENABLE_SLOT_3
+                sendCurrentRoomTemperatureH3();
+#endif
                 sendDesiredRoomTemperature();
             }
             lastConnect = millis();
@@ -119,12 +143,24 @@ void mqttHandleMessage(char *topic, byte *payload, unsigned int length) {
         currentRoomTemperature->setValueReceivedByWifi(temp);
         sendCurrentRoomTemperature();
         notifyCommandReceived();
-    } else if (strcmp(topic, "virtualvitotrol/currentRoomTemperatureH2/set") == 0) {
+    }
+#ifdef ENABLE_SLOT_2
+        else if (strcmp(topic, "virtualvitotrol/currentRoomTemperatureH2/set") == 0) {
         float temp = strtof(mqttMessageBuffer, nullptr);
         currentRoomTemperatureH2->setValueReceivedByWifi(temp);
         sendCurrentRoomTemperatureH2();
         notifyCommandReceived();
-    } else if (strcmp(topic, "virtualvitotrol/desiredRoomTemperature/set") == 0) {
+    }
+#endif
+#ifdef ENABLE_SLOT_3
+        else if (strcmp(topic, "virtualvitotrol/currentRoomTemperatureH3/set") == 0) {
+        float temp = strtof(mqttMessageBuffer, nullptr);
+        currentRoomTemperatureH3->setValueReceivedByWifi(temp);
+        sendCurrentRoomTemperatureH3();
+        notifyCommandReceived();
+    }
+#endif
+    else if (strcmp(topic, "virtualvitotrol/desiredRoomTemperature/set") == 0) {
         float temp = strtof(mqttMessageBuffer, nullptr);
         desiredRoomTemperature->setValueReceivedByWifi(temp);
         sendDesiredRoomTemperature();
@@ -165,9 +201,16 @@ void mqttLoop() {
         if (lastCurrentRoomTemperature != currentRoomTemperature->getFloatValue()) {
             sendCurrentRoomTemperature();
         }
+#ifdef ENABLE_SLOT_2
         if (lastCurrentRoomTemperatureH2 != currentRoomTemperatureH2->getFloatValue()) {
             sendCurrentRoomTemperatureH2();
         }
+#endif
+#ifdef ENABLE_SLOT_3
+        if (lastCurrentRoomTemperatureH3 != currentRoomTemperatureH3->getFloatValue()) {
+            sendCurrentRoomTemperatureH3();
+        }
+#endif
         if (lastDesiredRoomTemperature != desiredRoomTemperature->getFloatValue()) {
             sendDesiredRoomTemperature();
         }

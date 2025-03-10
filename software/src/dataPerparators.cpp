@@ -15,6 +15,7 @@ void prepareSendCurrentRoomTemperature() {
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x01);
 }
+#ifdef ENABLE_SLOT_2
 // the current room temperature
 void prepareSendCurrentRoomTemperatureH2() {
     // send current room temperature
@@ -30,6 +31,25 @@ void prepareSendCurrentRoomTemperatureH2() {
     ret[3] = 0x00 ^ 0xAA;
     prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x02);
 }
+#endif
+
+#ifdef ENABLE_SLOT_3
+// the current room temperature
+void prepareSendCurrentRoomTemperatureH3() {
+    // send current room temperature
+    byte ret[4];
+    ret[0] = 0x22;
+    if (currentRoomTemperatureH3->getFloatValue() > 25.5) {
+        ret[1] = ((int) currentRoomTemperatureH3->getValue() - 256) ^ 0xAA;
+        ret[2] = 0x01 ^ 0xAA;
+    } else {
+        ret[1] = currentRoomTemperatureH3->getSendValue() ^ 0xAA;
+        ret[2] = 0x00 ^ 0xAA;
+    }
+    ret[3] = 0x00 ^ 0xAA;
+    prepareResponse(MSG_SENDING_COMMAND, ret, 4, 0x02);
+}
+#endif
 
 // the desired room temperature
 void prepareSendDesiredRoomTemperature() {
