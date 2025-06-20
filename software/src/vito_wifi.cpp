@@ -270,6 +270,7 @@ void setupWifi() {
 #ifdef WIFI_SSID
     setupWifi(WIFI_SSID, WIFI_PASSWORD, WIFI_HOST);
 #else
+    wifiMgrConfigureEEPROM(1, 4095);
     // eeprom config
     wifiMgrPortalSetup(false, "WiFiVitotrol-", "p0rtal123");
 #endif

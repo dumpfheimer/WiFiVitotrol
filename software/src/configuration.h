@@ -5,7 +5,6 @@
 #include "my_config.h"
 #endif
 
-#define WIFI_MGR_EEPROM_START_ADDR 1
 // optional, can be configured over hotspot
 //#define WIFI_SSID "CHANGEME"
 //#define WIFI_PASSWORD "CHANGEME"
@@ -51,7 +50,6 @@
 #define DebugSerial Serial
 #define MODBUS_RX 17
 #define MODBUS_TX 16
-#define WIFI_MGR_EEPROM_SIZE 4096
 #elif defined(ESP8266)
 #include <SoftwareSerial.h>
 extern SoftwareSerial softwareSerial;
