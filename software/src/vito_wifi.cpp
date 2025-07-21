@@ -274,6 +274,7 @@ void setupWifi() {
     // eeprom config
     wifiMgrPortalSetup(false, "WiFiVitotrol-", "p0rtal123");
 #endif
+    setRescanInterval(-1);
 
     uint8_t p = 0;
     while (writableDataPoint[p] != nullptr) {
