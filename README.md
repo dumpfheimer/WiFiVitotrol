@@ -42,7 +42,7 @@ Opening up your heater is DANGEROUS. Always COMPLETELY POWER OFF the device befo
 If you are not 110% sure you know what you're doing get help by a professional.
 
 1. Wire up the ESP to the TTL following the schema in WIRING
-2. Connect MB_A and MB_D to the Terminals 145 of you Heater (Double and Triple check that this is the right Terminal on your Heater too)
+2. Connect MB_A and MB_B to the Terminals 145 of you Heater (Double and Triple check that this is the right Terminal on your Heater too)
 3. Configure your Heater (Details will follow)
 
 
