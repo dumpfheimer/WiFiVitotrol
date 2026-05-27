@@ -6,7 +6,6 @@
 #define SOFTWARE_MAIN_H
 
 #include <Arduino.h>
-#include <ElegantOTA.h>
 #include "dataEnums.h"
 #include "configuration.h"
 #include "mqtt.h"

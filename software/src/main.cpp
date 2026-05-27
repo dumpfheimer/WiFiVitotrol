@@ -57,6 +57,7 @@ void setup() {
     for (uint8_t i = 0; i < MSG_LOG_SIZE; i++) lastMessages[i] = nullptr;
 
     strncpy(linkState, "Setup", LINK_STATE_LENGTH);
+    linkState[LINK_STATE_LENGTH] = '\0'; // Ensure null termination
 #if defined(ESP8266)
     ModbusSerial.begin(1200, MODBUS_BAUD);
 #elif defined(ESP32)
@@ -137,6 +138,7 @@ void serialLoop() {
         }
         if (wasAvail) {
             strncpy(linkState, "Did not respond to heater because datapoint prevented it", LINK_STATE_LENGTH);
+            linkState[LINK_STATE_LENGTH] = '\0'; // Ensure null termination
         }
         debugPrintln("not talking to heater");
         return;
@@ -262,6 +264,7 @@ void serialLoop() {
             } else {
                 pushLastMessage('c', buffer, bufferPointer);
                 strncpy(linkState, "message with invalid CRC received", LINK_STATE_LENGTH);
+                linkState[LINK_STATE_LENGTH] = '\0'; // Ensure null termination
 #if DEBUG == true
                 // invalid message
                 debugPrintln("invalid message received:");
@@ -313,4 +316,5 @@ const char* getLinkState() {
 }
 void setLinkState(const char *newState) {
     strncpy(linkState, newState, LINK_STATE_LENGTH);
+    linkState[LINK_STATE_LENGTH] = '\0'; // Ensure null termination
 }
