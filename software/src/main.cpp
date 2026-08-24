@@ -82,10 +82,14 @@ void setup() {
 #endif
 
     clearResponseBuffer();
+    debugPrintln("configureData");
     configureData();
 
+    debugPrintln("setupWifi");
     setupWifi();
+    debugPrintln("setup MQTT");
     mqttSetup();
+    debugPrintln("setup complete");
 }
 
 void pushLastMessage(char* msg) {

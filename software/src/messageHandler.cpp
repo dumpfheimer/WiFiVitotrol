@@ -123,7 +123,7 @@ bool workMessageAndCreateResponseBuffer(byte buff[]) {
         default:
 #if DEBUG == true
             debugPrintln("not sure how to handle message:");
-            printAsHex(&DebugSerial, buff, buffLen);
+            printAsHex(&DebugSerial, buff, BUFFER_LEN);
             debugPrintln("");
 #endif
             return false;

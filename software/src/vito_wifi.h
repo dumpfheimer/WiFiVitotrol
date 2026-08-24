@@ -15,7 +15,9 @@
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#ifdef WIFI_SSID
 #include <ESP8266mDNS.h>
+#endif
 
 extern ESP8266WebServer server;
 #endif
@@ -23,7 +25,9 @@ extern ESP8266WebServer server;
 #ifdef ESP32
 #include <WiFi.h>
 #include <WebServer.h>
+#ifdef WIFI_SSID
 #include <ESPmDNS.h>
+#endif
 #endif
 
 

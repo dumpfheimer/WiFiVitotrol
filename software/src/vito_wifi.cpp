@@ -1239,13 +1239,16 @@ void wifiHandleReboot() {
 
 // ... setup wifi
 void setupWifi() {
-    wifiMgrExpose(&server); 
+    wifiMgrExpose(&server);
 #ifdef WIFI_SSID
+    debugPrintln("setupWifi with hard coded credentials");
     setupWifi(WIFI_SSID, WIFI_PASSWORD, WIFI_HOST);
 #else
+    debugPrintln("setupWifi with portal");
     wifiMgrConfigureEEPROM(1, 4095);
     // eeprom config
     wifiMgrPortalSetup(false, "WiFiVitotrol-", "p0rtal123");
+    debugPrintln("setupWifi with portal complete");
 #endif
     setRescanInterval(-1);
 
@@ -1272,8 +1275,8 @@ void setupWifi() {
     server.on("/requestDataset", wifiHandleRequestDataset);
     server.on("/getRequestDataset", wifiHandleGetRequestDataset);
 
-    debugPrintln("Connecting to WiFi..");
 #ifdef WIFI_SSID
+    debugPrintln("Connecting to WiFi..");
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
     }
@@ -1288,28 +1291,3 @@ void setupWifi() {
 void wifiLoop() {
     server.handleClient();
 }
-/*
-async function delay(ms) {
-    return new Promise(resolve => {
-        setInterval(resolve, ms);
-    });
-}
-async function waitForRequestDatasetSent() {
-    while (true) {
-        let r = await fetch("/getRequestDataset");
-        let t = await r.text();
-        if (t == "0") return;
-        else await delay(500);
-    }
-}
-async function requestDataset(id) {
-    let r = await fetch("/requestDataset?id=" + encodeURIComponent(id));
-}
-async function requestAllDatasets() {
-    let i = 0;
-    while (i < 256) {
-        await requestDataset(i++);
-        await waitForRequestDatasetSent();
-    }
-}
- */
